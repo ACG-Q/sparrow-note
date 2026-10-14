@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { NoteDoc } from "./db/notes";
 import { plainTextOfBlocks } from "./lib/aggregate";
+import s from "./TimelineView.module.css";
 
 function formatDay(dateStr: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
@@ -39,24 +40,24 @@ export function TimelineView({
 
   if (notes.length === 0) {
     return (
-      <div className="timeline-page">
-        <div className="timeline-empty">还没有笔记，点击右下角按钮写下今天的第一条</div>
+      <div className={s.page}>
+        <div className={s.empty}>还没有笔记，点击右下角按钮写下今天的第一条</div>
       </div>
     );
   }
 
   return (
-    <div className="timeline-page">
+    <div className={s.page}>
       {groups.map(([date, items]) => (
-        <section key={date} className="timeline-group">
-          <h2 className="timeline-date">{formatDay(date)}</h2>
-          <div className="timeline-cards">
+        <section key={date} className={s.group}>
+          <h2 className={s.date}>{formatDay(date)}</h2>
+          <div className={s.cards}>
             {items.map((n) => {
               const ex = excerpt(n);
               return (
                 <div
                   key={n.id}
-                  className="timeline-card"
+                  className={s.card}
                   onClick={() => onOpenNote(n.id)}
                   role="button"
                   tabIndex={0}
@@ -64,10 +65,10 @@ export function TimelineView({
                     if (e.key === "Enter") onOpenNote(n.id);
                   }}
                 >
-                  <div className="timeline-card-title">{n.title || "无标题"}</div>
-                  {ex && <div className="timeline-card-excerpt">{ex}</div>}
+                  <div className={s.cardTitle}>{n.title || "无标题"}</div>
+                  {ex && <div className={s.cardExcerpt}>{ex}</div>}
                   <button
-                    className="timeline-card-delete"
+                    className={s.cardDelete}
                     title="删除"
                     onClick={(e) => {
                       e.stopPropagation();

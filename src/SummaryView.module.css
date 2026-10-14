@@ -1,0 +1,152 @@
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 36px 48px 120px;
+}
+
+.title {
+  font-size: 28px;
+  margin: 0 0 16px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tabActive {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.tabCount {
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.empty {
+  color: var(--fg-muted);
+  font-size: 14px;
+  padding: 24px 0;
+}
+
+.row {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.row:hover {
+  background: var(--hover);
+}
+
+.moodEmoji {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.moodBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.moodText {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  font-size: 12px;
+  color: var(--fg-muted);
+  margin-top: 2px;
+}
+
+.contactRow {
+  justify-content: space-between;
+}
+
+.contactName {
+  font-size: 14px;
+}
+
+.contactRelation {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--fg-muted);
+  background: var(--hover);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.contactPhone {
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+
+.anniversaryRow {
+  justify-content: space-between;
+}
+
+.anniversaryBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.anniversaryName {
+  font-size: 14px;
+}
+
+.anniversaryDate {
+  font-size: 12px;
+  color: var(--fg-muted);
+  margin-top: 2px;
+}
+
+.countdown {
+  font-size: 13px;
+  color: var(--fg-muted);
+  background: var(--hover);
+  border-radius: 999px;
+  padding: 3px 10px;
+  flex: none;
+}
+
+.urgent {
+  color: #e03e3e;
+  background: #e03e3e1a;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 20px 16px 120px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+}

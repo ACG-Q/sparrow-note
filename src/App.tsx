@@ -7,6 +7,7 @@ import { TimelineView } from "./TimelineView";
 import { noteMatchesQuery } from "./lib/aggregate";
 import { resolveDark, useThemePref } from "./lib/theme";
 import { MenuIcon, UserIcon } from "./ui/icons";
+import s from "./App.module.css";
 
 function today(): string {
   const d = new Date();
@@ -149,19 +150,15 @@ export default function App() {
     });
   }, []);
 
-  if (!loaded) return <div className="app-loading">加载中…</div>;
+  if (!loaded) return <div className={s.loading}>加载中…</div>;
 
   return (
-    <div className={sidebarOpen ? "app sidebar-open" : "app"}>
-      <div className="topbar">
-        <button
-          className="btn-menu"
-          onClick={() => setSidebarOpen((v) => !v)}
-          aria-label="菜单"
-        >
+    <div className={sidebarOpen ? `${s.app} ${s.sidebarOpen}` : s.app}>
+      <div className={s.topbar}>
+        <button className={s.btnMenu} onClick={() => setSidebarOpen((v) => !v)} aria-label="菜单">
           <MenuIcon />
         </button>
-        <span className="topbar-title">
+        <span className={s.topbarTitle}>
           {view === "summary"
             ? "汇总"
             : view === "profile"
@@ -170,27 +167,27 @@ export default function App() {
                 ? "时间线"
                 : active?.title || "无标题"}
         </span>
-        <button className="btn-new" onClick={handleCreate}>
+        <button className={s.btnNew} onClick={handleCreate}>
           ＋
         </button>
       </div>
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <span className="app-name">麻雀记</span>
-          <button className="btn-new btn-new-full" onClick={handleCreate}>
+      <aside className={s.sidebar}>
+        <div className={s.sidebarHeader}>
+          <span className={s.appName}>麻雀记</span>
+          <button className={`${s.btnNew} ${s.btnNewFull}`} onClick={handleCreate}>
             ＋ 新笔记
           </button>
         </div>
-        <div className="sidebar-filters">
+        <div className={s.sidebarFilters}>
           <input
-            className="search-input"
+            className={s.searchInput}
             placeholder="搜索标题或正文…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <div className="filter-row">
+          <div className={s.filterRow}>
             <input
-              className="date-filter"
+              className={s.dateFilter}
               type="date"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
@@ -198,7 +195,7 @@ export default function App() {
             />
             {(query || dateFilter) && (
               <button
-                className="btn-clear"
+                className={s.btnClear}
                 onClick={() => {
                   setQuery("");
                   setDateFilter("");
@@ -210,13 +207,13 @@ export default function App() {
           </div>
         </div>
         <button
-          className={view === "timeline" ? "btn-summary active" : "btn-summary"}
+          className={view === "timeline" ? `${s.btnSummary} ${s.btnSummaryActive}` : s.btnSummary}
           onClick={openTimeline}
         >
           时间线
         </button>
         <button
-          className={view === "summary" ? "btn-summary active" : "btn-summary"}
+          className={view === "summary" ? `${s.btnSummary} ${s.btnSummaryActive}` : s.btnSummary}
           onClick={() => {
             setView(view === "summary" ? "timeline" : "summary");
             setSidebarOpen(false);
@@ -225,34 +222,30 @@ export default function App() {
           汇总视图
         </button>
         <button
-          className={view === "profile" ? "btn-summary active" : "btn-summary"}
+          className={view === "profile" ? `${s.btnSummary} ${s.btnSummaryActive}` : s.btnSummary}
           onClick={() => {
             setView("profile");
             setSidebarOpen(false);
           }}
         >
-          <span className="btn-summary-icon">
+          <span className={s.btnSummaryIcon}>
             <UserIcon />
           </span>
           我的
         </button>
-        <nav className="note-list">
-          {visibleNotes.length === 0 && (
-            <div className="note-list-empty">没有匹配的笔记</div>
-          )}
+        <nav className={s.noteList}>
+          {visibleNotes.length === 0 && <div className={s.noteListEmpty}>没有匹配的笔记</div>}
           {visibleNotes.map((n) => (
             <div
               key={n.id}
-              className={n.id === activeId ? "note-item active" : "note-item"}
+              className={n.id === activeId ? `${s.noteItem} ${s.noteItemActive}` : s.noteItem}
               onClick={() => openNote(n.id)}
             >
-              <div className="note-item-title">
-                {n.title || "无标题"}
-              </div>
-              <div className="note-item-meta">
+              <div className={s.noteItemTitle}>{n.title || "无标题"}</div>
+              <div className={s.noteItemMeta}>
                 <span>{n.date}</span>
                 <button
-                  className="btn-delete"
+                  className={s.btnDelete}
                   title="删除"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -266,30 +259,26 @@ export default function App() {
           ))}
         </nav>
       </aside>
-      <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />
-      <main className="main">
+      <div className={s.sidebarBackdrop} onClick={() => setSidebarOpen(false)} />
+      <main className={s.main}>
         {view === "timeline" ? (
-          <TimelineView
-            notes={visibleNotes}
-            onOpenNote={openNote}
-            onDeleteNote={handleDelete}
-          />
+          <TimelineView notes={visibleNotes} onOpenNote={openNote} onDeleteNote={handleDelete} />
         ) : view === "summary" ? (
           <SummaryView notes={notes} onOpenNote={openNote} />
         ) : view === "profile" ? (
           <ProfileView notes={notes} onDataCleared={reloadNotes} />
         ) : active ? (
-          <div className="editor-page" key={active.id}>
-            <div className="editor-header">
+          <div className={s.editorPage} key={active.id}>
+            <div className={s.editorHeader}>
               <input
-                className="title-input"
+                className={s.titleInput}
                 placeholder="无标题"
                 value={active.title}
                 onChange={(e) => handleTitleChange(e.target.value)}
               />
-              <div className="editor-date">
+              <div>
                 <input
-                  className="date-input"
+                  className={s.dateInput}
                   type="date"
                   value={active.date}
                   onChange={(e) => {
@@ -300,16 +289,13 @@ export default function App() {
                 />
               </div>
             </div>
-            <NoteEditor
-              initialContent={active.blocks}
-              onChange={handleBlocksChange}
-            />
+            <NoteEditor initialContent={active.blocks} onChange={handleBlocksChange} />
           </div>
         ) : (
-          <div className="empty-state">选择或创建一条笔记</div>
+          <div className={s.emptyState}>选择或创建一条笔记</div>
         )}
         {view === "timeline" && (
-          <button className="fab" onClick={handleCreate} aria-label="新建今日笔记">
+          <button className={s.fab} onClick={handleCreate} aria-label="新建今日笔记">
             ＋
           </button>
         )}

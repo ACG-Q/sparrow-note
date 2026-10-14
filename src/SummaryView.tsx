@@ -6,6 +6,7 @@ import {
   collectMoods,
   daysUntil,
 } from "./lib/aggregate";
+import s from "./SummaryView.module.css";
 
 type Tab = "mood" | "contact" | "anniversary";
 
@@ -22,42 +23,37 @@ export function SummaryView({
   const anniversaries = useMemo(() => collectAnniversaries(notes), [notes]);
 
   return (
-    <div className="summary-page">
-      <h1 className="summary-title">汇总</h1>
-      <div className="summary-tabs">
-        <button
-          className={tab === "mood" ? "tab active" : "tab"}
-          onClick={() => setTab("mood")}
-        >
-          心情回顾 <span className="tab-count">{moods.length}</span>
+    <div className={s.page}>
+      <h1 className={s.title}>汇总</h1>
+      <div className={s.tabs}>
+        <button className={tab === "mood" ? `${s.tab} ${s.tabActive}` : s.tab} onClick={() => setTab("mood")}>
+          心情回顾 <span className={s.tabCount}>{moods.length}</span>
         </button>
         <button
-          className={tab === "contact" ? "tab active" : "tab"}
+          className={tab === "contact" ? `${s.tab} ${s.tabActive}` : s.tab}
           onClick={() => setTab("contact")}
         >
-          联系人 <span className="tab-count">{contacts.length}</span>
+          联系人 <span className={s.tabCount}>{contacts.length}</span>
         </button>
         <button
-          className={tab === "anniversary" ? "tab active" : "tab"}
+          className={tab === "anniversary" ? `${s.tab} ${s.tabActive}` : s.tab}
           onClick={() => setTab("anniversary")}
         >
-          纪念日 <span className="tab-count">{anniversaries.length}</span>
+          纪念日 <span className={s.tabCount}>{anniversaries.length}</span>
         </button>
       </div>
 
       {tab === "mood" && (
-        <div className="summary-list">
-          {moods.length === 0 && <div className="summary-empty">还没有心情记录，在笔记中插入「心情」块试试</div>}
+        <div className={s.list}>
+          {moods.length === 0 && (
+            <div className={s.empty}>还没有心情记录，在笔记中插入「心情」块试试</div>
+          )}
           {moods.map((m, i) => (
-            <div
-              key={i}
-              className="summary-row mood-row"
-              onClick={() => onOpenNote(m.noteId)}
-            >
-              <span className="mood-emoji">{m.emoji}</span>
-              <div className="mood-body">
-                <div className="mood-text">{m.text || "（无备注）"}</div>
-                <div className="mood-meta">
+            <div key={i} className={s.row} onClick={() => onOpenNote(m.noteId)}>
+              <span className={s.moodEmoji}>{m.emoji}</span>
+              <div className={s.moodBody}>
+                <div className={s.moodText}>{m.text || "（无备注）"}</div>
+                <div className={s.meta}>
                   {m.noteDate}
                   {m.noteTitle ? ` · ${m.noteTitle}` : ""}
                 </div>
@@ -68,42 +64,42 @@ export function SummaryView({
       )}
 
       {tab === "contact" && (
-        <div className="summary-list">
-          {contacts.length === 0 && <div className="summary-empty">还没有联系人，在笔记中插入「联系人」块试试</div>}
+        <div className={s.list}>
+          {contacts.length === 0 && (
+            <div className={s.empty}>还没有联系人，在笔记中插入「联系人」块试试</div>
+          )}
           {contacts.map((c, i) => (
-            <div
-              key={i}
-              className="summary-row contact-row"
-              onClick={() => onOpenNote(c.noteId)}
-            >
-              <div className="contact-name">
+            <div key={i} className={`${s.row} ${s.contactRow}`} onClick={() => onOpenNote(c.noteId)}>
+              <div className={s.contactName}>
                 {c.name || "（无名）"}
-                {c.relation && <span className="contact-relation">{c.relation}</span>}
+                {c.relation && <span className={s.contactRelation}>{c.relation}</span>}
               </div>
-              <div className="contact-phone">{c.phone}</div>
-              <div className="contact-meta">{c.noteDate}</div>
+              <div className={s.contactPhone}>{c.phone}</div>
+              <div className={s.meta}>{c.noteDate}</div>
             </div>
           ))}
         </div>
       )}
 
       {tab === "anniversary" && (
-        <div className="summary-list">
-          {anniversaries.length === 0 && <div className="summary-empty">还没有纪念日，在笔记中插入「纪念日」块试试</div>}
+        <div className={s.list}>
+          {anniversaries.length === 0 && (
+            <div className={s.empty}>还没有纪念日，在笔记中插入「纪念日」块试试</div>
+          )}
           {anniversaries.map((a, i) => {
             const days = daysUntil(a.date);
             return (
               <div
                 key={i}
-                className="summary-row anniversary-row"
+                className={`${s.row} ${s.anniversaryRow}`}
                 onClick={() => onOpenNote(a.noteId)}
               >
-                <div className="anniversary-body">
-                  <div className="anniversary-name">{a.title}</div>
-                  <div className="anniversary-date">{a.date}</div>
+                <div className={s.anniversaryBody}>
+                  <div className={s.anniversaryName}>{a.title}</div>
+                  <div className={s.anniversaryDate}>{a.date}</div>
                 </div>
                 {days !== null && (
-                  <span className={days <= 7 ? "bn-countdown urgent" : "bn-countdown"}>
+                  <span className={days <= 7 ? `${s.countdown} ${s.urgent}` : s.countdown}>
                     {days > 0 ? `还有 ${days} 天` : days === 0 ? "就是今天" : `已过 ${-days} 天`}
                   </span>
                 )}

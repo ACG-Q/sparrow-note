@@ -3,6 +3,7 @@ import type { NoteDoc } from "./db/notes";
 import { clearAllNotes, putNote } from "./db/notes";
 import { collectAnniversaries, collectContacts, collectMoods } from "./lib/aggregate";
 import { setThemePref, useThemePref, type ThemePref } from "./lib/theme";
+import s from "./ProfileView.module.css";
 
 const NAME_KEY = "sparrow-nickname";
 
@@ -65,7 +66,10 @@ export function ProfileView({
         if (!Array.isArray(data)) throw new Error("格式错误");
         const ok = data.every(
           (x) =>
-            x && typeof x === "object" && typeof (x as NoteDoc).id === "string" && Array.isArray((x as NoteDoc).blocks),
+            x &&
+            typeof x === "object" &&
+            typeof (x as NoteDoc).id === "string" &&
+            Array.isArray((x as NoteDoc).blocks),
         );
         if (!ok) throw new Error("内容校验失败");
         for (const note of data as NoteDoc[]) {
@@ -88,60 +92,60 @@ export function ProfileView({
   };
 
   return (
-    <div className="profile-page">
-      <h2 className="profile-h">我的</h2>
+    <div className={s.page}>
+      <h2 className={s.heading}>我的</h2>
 
-      <section className="profile-card">
-        <h3 className="profile-card-title">个人信息</h3>
-        <div className="profile-avatar-row">
-          <div className="profile-avatar" aria-hidden="true">
+      <section className={s.card}>
+        <h3 className={s.cardTitle}>个人信息</h3>
+        <div className={s.avatarRow}>
+          <div className={s.avatar} aria-hidden="true">
             {name.trim() ? name.trim().slice(0, 1).toUpperCase() : "?"}
           </div>
-          <div className="profile-name-row">
+          <div className={s.nameRow}>
             <input
-              className="bn-input profile-name-input"
+              className={s.nameInput}
               placeholder="输入昵称"
               value={name}
               maxLength={20}
               onChange={(e) => setName(e.target.value)}
             />
-            <button type="button" className="profile-btn" onClick={saveName}>
+            <button type="button" className={s.btn} onClick={saveName}>
               {saved ? "已保存" : "保存"}
             </button>
           </div>
         </div>
       </section>
 
-      <section className="profile-card">
-        <h3 className="profile-card-title">统计</h3>
-        <div className="profile-stats">
-          <div className="profile-stat">
-            <span className="profile-stat-num">{stats.noteCount}</span>
-            <span className="profile-stat-label">笔记</span>
+      <section className={s.card}>
+        <h3 className={s.cardTitle}>统计</h3>
+        <div className={s.stats}>
+          <div className={s.stat}>
+            <span className={s.statNum}>{stats.noteCount}</span>
+            <span className={s.statLabel}>笔记</span>
           </div>
-          <div className="profile-stat">
-            <span className="profile-stat-num">{stats.moodCount}</span>
-            <span className="profile-stat-label">心情</span>
+          <div className={s.stat}>
+            <span className={s.statNum}>{stats.moodCount}</span>
+            <span className={s.statLabel}>心情</span>
           </div>
-          <div className="profile-stat">
-            <span className="profile-stat-num">{stats.contactCount}</span>
-            <span className="profile-stat-label">联系人</span>
+          <div className={s.stat}>
+            <span className={s.statNum}>{stats.contactCount}</span>
+            <span className={s.statLabel}>联系人</span>
           </div>
-          <div className="profile-stat">
-            <span className="profile-stat-num">{stats.dayCount}</span>
-            <span className="profile-stat-label">日子</span>
+          <div className={s.stat}>
+            <span className={s.statNum}>{stats.dayCount}</span>
+            <span className={s.statLabel}>日子</span>
           </div>
         </div>
-        <div className="profile-range">
+        <div className={s.range}>
           记录范围：{stats.firstDate} ~ {stats.lastDate}
         </div>
       </section>
 
-      <section className="profile-card">
-        <h3 className="profile-card-title">外观</h3>
-        <div className="profile-theme-row">
+      <section className={s.card}>
+        <h3 className={s.cardTitle}>外观</h3>
+        <div className={s.themeRow}>
           {(["auto", "light", "dark"] as ThemePref[]).map((p) => (
-            <label key={p} className="profile-theme-label">
+            <label key={p} className={s.themeLabel}>
               <input
                 type="radio"
                 name="theme"
@@ -154,17 +158,13 @@ export function ProfileView({
         </div>
       </section>
 
-      <section className="profile-card">
-        <h3 className="profile-card-title">数据</h3>
-        <div className="profile-actions">
-          <button type="button" className="profile-btn" onClick={exportJson}>
+      <section className={s.card}>
+        <h3 className={s.cardTitle}>数据</h3>
+        <div className={s.actions}>
+          <button type="button" className={s.btn} onClick={exportJson}>
             导出 JSON
           </button>
-          <button
-            type="button"
-            className="profile-btn"
-            onClick={() => fileRef.current?.click()}
-          >
+          <button type="button" className={s.btn} onClick={() => fileRef.current?.click()}>
             导入 JSON
           </button>
           <input
@@ -178,18 +178,18 @@ export function ProfileView({
               e.target.value = "";
             }}
           />
-          <button type="button" className="profile-btn danger" onClick={clearAll}>
+          <button type="button" className={`${s.btn} ${s.btnDanger}`} onClick={clearAll}>
             清空全部
           </button>
         </div>
-        {msg && <div className="profile-msg">{msg}</div>}
+        {msg && <div className={s.msg}>{msg}</div>}
       </section>
 
-      <section className="profile-card">
-        <h3 className="profile-card-title">关于</h3>
-        <div className="profile-about">
+      <section className={s.card}>
+        <h3 className={s.cardTitle}>关于</h3>
+        <div className={s.about}>
           <div>麻雀记 v0.1.0</div>
-          <div className="profile-about-sub">
+          <div className={s.aboutSub}>
             本地优先的日记笔记应用，数据仅存储在本机浏览器 IndexedDB 中。
           </div>
         </div>
