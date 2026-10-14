@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.local
+*.log
+dev-server.log
+src-tauri/target/
+src-tauri/gen/
+.DS_Store
+.superpowers/
+.agents/
