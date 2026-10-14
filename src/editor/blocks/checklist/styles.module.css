@@ -1,0 +1,76 @@
+.root,
+.editRoot {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.empty {
+  color: var(--fg-muted);
+  font-size: 13px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.text {
+  flex: 1;
+  font-size: 14px;
+  min-width: 0;
+}
+
+.input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  font-size: 14px;
+  outline: none;
+  padding: 2px 0;
+  min-width: 0;
+}
+
+.done {
+  text-decoration: line-through;
+  color: var(--fg-muted);
+}
+
+.del {
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 4px;
+  visibility: hidden;
+}
+
+.row:hover .del {
+  visibility: visible;
+}
+
+.del:hover {
+  color: #e03e3e;
+}
+
+.add {
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  padding: 2px 0;
+}
+
+.add:hover {
+  color: var(--fg);
+}

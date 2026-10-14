@@ -1,18 +1,9 @@
-import { createReactBlockSpec, ReactCustomBlockRenderProps } from "@blocknote/react";
-import { defaultProps } from "@blocknote/core";
 import { useEffect, useRef, useState } from "react";
-import { blobToDataURL } from "../../lib/media";
-
-const voiceConfig = {
-  type: "voice",
-  propSchema: {
-    ...defaultProps,
-    url: { default: "" },
-  },
-  content: "none",
-} as const;
-
-type VoiceProps = ReactCustomBlockRenderProps<typeof voiceConfig>;
+import { createReactBlockSpec } from "@blocknote/react";
+import { blobToDataURL } from "../../../lib/media";
+import { voiceConfig, type VoiceProps, type VoiceEditor } from "./config";
+import VoiceDisplay from "./Display";
+import VoiceEdit from "./Edit";
 
 function VoiceRender({ block, editor }: VoiceProps) {
   const [recording, setRecording] = useState(false);
@@ -20,6 +11,8 @@ function VoiceRender({ block, editor }: VoiceProps) {
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number>(0);
+  const editorRef = useRef<VoiceEditor>(editor);
+  editorRef.current = editor;
 
   useEffect(
     () => () => {
@@ -41,7 +34,7 @@ function VoiceRender({ block, editor }: VoiceProps) {
         stream.getTracks().forEach((t) => t.stop());
         const blob = new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" });
         blobToDataURL(blob).then((url) =>
-          editor.updateBlock(block, { props: { url } }),
+          editorRef.current.updateBlock(block, { props: { url } }),
         );
       };
       rec.start();
@@ -60,34 +53,10 @@ function VoiceRender({ block, editor }: VoiceProps) {
     setRecording(false);
   };
 
-  return (
-    <div className="bn-voice" contentEditable={false}>
-      {block.props.url && !recording && (
-        <audio className="bn-voice-audio" controls src={block.props.url} />
-      )}
-      <div className="bn-voice-actions">
-        {recording ? (
-          <button type="button" className="bn-voice-btn rec" onMouseDown={(e) => e.preventDefault()} onClick={stop}>
-            停止录制（{secs}s）
-          </button>
-        ) : (
-          <button type="button" className="bn-voice-btn" onMouseDown={(e) => e.preventDefault()} onClick={start}>
-            {block.props.url ? "重新录制" : "开始录音"}
-          </button>
-        )}
-        {block.props.url && !recording && (
-          <button
-            type="button"
-            className="bn-voice-btn"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => editor.updateBlock(block, { props: { url: "" } })}
-          >
-            删除
-          </button>
-        )}
-      </div>
-    </div>
-  );
+  if (recording) {
+    return <VoiceEdit secs={secs} onStop={stop} />;
+  }
+  return <VoiceDisplay block={block} editor={editor} onRecord={start} />;
 }
 
 export const VoiceBlock = createReactBlockSpec(voiceConfig, {

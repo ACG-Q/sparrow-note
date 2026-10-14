@@ -1,30 +1,21 @@
-import { createReactBlockSpec, ReactCustomBlockRenderProps } from "@blocknote/react";
-import { defaultProps } from "@blocknote/core";
 import { useEffect, useRef, useState } from "react";
+import s from "./styles.module.css";
+import { COLORS, HEIGHT, WIDTH, type DrawingBlockT, type DrawingEditor } from "./config";
 
-const WIDTH = 720;
-const HEIGHT = 320;
-const COLORS = ["#191919", "#e03e3e", "#2383e2", "#0f7b6c", "#f59e0b", "#8b5cf6"];
-
-const drawingConfig = {
-  type: "drawing",
-  propSchema: {
-    ...defaultProps,
-    data: { default: "" },
-  },
-  content: "none",
-} as const;
-
-type DrawingProps = ReactCustomBlockRenderProps<typeof drawingConfig>;
-
-function DrawingRender({ block, editor }: DrawingProps) {
-  const [editing, setEditing] = useState(!block.props.data);
+export default function DrawingEdit({
+  block,
+  editor,
+  onDone,
+}: {
+  block: DrawingBlockT;
+  editor: DrawingEditor;
+  onDone: () => void;
+}) {
   const [color, setColor] = useState(COLORS[0]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
 
   useEffect(() => {
-    if (!editing) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -36,7 +27,7 @@ function DrawingRender({ block, editor }: DrawingProps) {
       img.onload = () => ctx.drawImage(img, 0, 0);
       img.src = block.props.data;
     }
-  }, [editing, block.props.data]);
+  }, [block.props.data]);
 
   const pos = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -77,41 +68,17 @@ function DrawingRender({ block, editor }: DrawingProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     editor.updateBlock(block, { props: { data: canvas.toDataURL("image/png") } });
-    setEditing(false);
+    onDone();
   };
 
-  if (!editing && block.props.data) {
-    return (
-      <div className="bn-drawing" contentEditable={false}>
-        <img className="bn-drawing-img" src={block.props.data} alt="手绘" />
-        <div className="bn-drawing-actions">
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => setEditing(true)}
-          >
-            编辑
-          </button>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => editor.updateBlock(block, { props: { data: "" } })}
-          >
-            删除
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="bn-drawing" contentEditable={false}>
-      <div className="bn-drawing-toolbar">
+    <div className={s.root} contentEditable={false}>
+      <div className={s.toolbar}>
         {COLORS.map((c) => (
           <button
             key={c}
             type="button"
-            className={c === color ? "bn-drawing-color active" : "bn-drawing-color"}
+            className={c === color ? `${s.color} ${s.colorActive}` : s.color}
             style={{ background: c }}
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => setColor(c)}
@@ -120,7 +87,7 @@ function DrawingRender({ block, editor }: DrawingProps) {
         ))}
         <button
           type="button"
-          className="bn-drawing-clear"
+          className={s.btn}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             const ctx = canvasRef.current?.getContext("2d");
@@ -129,13 +96,13 @@ function DrawingRender({ block, editor }: DrawingProps) {
         >
           清空
         </button>
-        <button type="button" className="bn-drawing-save" onMouseDown={(e) => e.preventDefault()} onClick={save}>
+        <button type="button" className={s.save} onMouseDown={(e) => e.preventDefault()} onClick={save}>
           完成
         </button>
       </div>
       <canvas
         ref={canvasRef}
-        className="bn-drawing-canvas"
+        className={s.canvas}
         width={WIDTH}
         height={HEIGHT}
         onPointerDown={start}
@@ -146,7 +113,3 @@ function DrawingRender({ block, editor }: DrawingProps) {
     </div>
   );
 }
-
-export const DrawingBlock = createReactBlockSpec(drawingConfig, {
-  render: (props) => <DrawingRender {...props} />,
-});
