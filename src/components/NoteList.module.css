@@ -1,0 +1,167 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.searchRow:focus-within {
+  border-color: var(--accent);
+}
+
+.searchIcon {
+  display: flex;
+  color: var(--fg-muted);
+  flex-shrink: 0;
+}
+
+.searchIcon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--fg);
+  font-size: 13px;
+}
+
+.searchInput::placeholder {
+  color: var(--fg-muted);
+}
+
+.groupHead {
+  font-size: 11px;
+  color: var(--fg-muted);
+  padding: 8px 6px 4px;
+  position: sticky;
+  top: 0;
+  background: var(--bg-sidebar);
+  z-index: 1;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.row:hover {
+  background: var(--hover);
+}
+
+.rowActive,
+.rowActive:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.rowTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rowMeta {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  min-width: 76px;
+}
+
+.rowDate {
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+.row:hover .rowDate {
+  visibility: hidden;
+}
+
+.rowDelete {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  visibility: hidden;
+  padding: 0;
+}
+
+.row:hover .rowDelete {
+  visibility: visible;
+}
+
+.rowDelete:hover {
+  color: #e03e3e;
+  background: var(--hover);
+}
+
+.rowDelete svg {
+  width: 14px;
+  height: 14px;
+}
+
+.empty {
+  text-align: center;
+  color: var(--fg-muted);
+  font-size: 13px;
+  padding: 24px 0;
+}
+
+.emptyNew {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 4px;
+  padding: 12px;
+  min-height: 44px;
+}
+
+.emptyNew:hover {
+  text-decoration: underline;
+}
+
+@media (hover: none) {
+  .rowDate {
+    display: none;
+  }
+
+  .rowDelete {
+    visibility: visible;
+  }
+}
