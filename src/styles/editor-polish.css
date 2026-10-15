@@ -1,0 +1,39 @@
+/* 编辑器打磨样式：必须在 BlockNote 样式之后加载。
+   颜色走官方 --bn-* 令牌覆盖；结构尺寸走局部规则。 */
+
+:root {
+  --ed-placeholder: #9a9996;
+  --ed-block-hover: rgba(55, 53, 47, 0.03);
+  --ed-selection: rgba(35, 131, 226, 0.18);
+  --ed-menu-active: #efefef;
+  --ed-pop-shadow: 0 4px 16px rgba(15, 15, 15, 0.12);
+  --ed-pop-border: #e3e3e1;
+}
+
+html[data-theme="dark"] {
+  --ed-placeholder: #8a8a8a;
+  --ed-block-hover: rgba(255, 255, 255, 0.04);
+  --ed-selection: rgba(140, 130, 255, 0.22);
+  --ed-menu-active: #3a3a3a;
+  --ed-pop-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
+  --ed-pop-border: #2f2f2f;
+}
+
+/* 底板：两主题统一去卡片底（Notion 式内容直接落在页面上），
+   同时去掉 ProseMirror 默认 54px 水平内边距——正文左缘与标题对齐，
+   拖拽手柄（＋/⋮⋮）悬浮在 editorPage 左侧留白区。 */
+.bn-root .bn-editor {
+  background-color: transparent;
+  border-radius: 0;
+  padding-inline: 0;
+}
+
+/* 块 hover 反馈 */
+.bn-root .bn-block-outer:hover {
+  background-color: var(--ed-block-hover);
+}
+
+/* 选区高亮：暗色低饱和蓝紫，亮色柔和 */
+.bn-root .bn-editor ::selection {
+  background: var(--ed-selection);
+}
