@@ -6,6 +6,7 @@ const KEY = "sparrow-theme";
 const listeners = new Set<() => void>();
 
 function read(): ThemePref {
+  if (typeof localStorage === "undefined") return "auto";
   const v = localStorage.getItem(KEY);
   return v === "light" || v === "dark" ? v : "auto";
 }
@@ -36,4 +37,12 @@ export function resolveDark(pref: ThemePref): boolean {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   }
   return pref === "dark";
+}
+
+export function nextThemePref(pref: ThemePref): ThemePref {
+  return pref === "light" ? "dark" : pref === "dark" ? "auto" : "light";
+}
+
+export function themeLabel(pref: ThemePref): string {
+  return pref === "light" ? "浅色" : pref === "dark" ? "深色" : "跟随系统";
 }
