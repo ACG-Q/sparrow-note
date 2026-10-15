@@ -37,3 +37,58 @@ html[data-theme="dark"] {
 .bn-root .bn-editor ::selection {
   background: var(--ed-selection);
 }
+
+/* 斜杠菜单：限高 + 密度 + 层次 */
+.bn-root.bn-container .bn-suggestion-menu {
+  max-height: 360px;
+  border: 1px solid var(--ed-pop-border);
+  border-width: 1px;
+  box-shadow: var(--ed-pop-shadow);
+  padding: 4px;
+}
+
+/* 单行 36px 密度（demo 基准）：收敛默认双行描述 */
+.bn-root.bn-container .bn-suggestion-menu-item {
+  height: 36px;
+  min-height: 36px;
+  padding-block: 0;
+}
+
+.bn-root.bn-container .bn-suggestion-menu-item:not(.bn-suggestion-menu-item-small) {
+  min-height: 36px;
+}
+
+.bn-root.bn-container .bn-mt-suggestion-menu-item-subtitle {
+  display: none;
+}
+
+.bn-root.bn-container .bn-mt-suggestion-menu-item-section {
+  min-width: 20px;
+}
+
+.bn-root .bn-suggestion-menu-item .bn-mt-suggestion-menu-item-section svg {
+  width: 20px;
+  height: 20px;
+}
+
+.bn-root.bn-container .bn-suggestion-menu-label {
+  color: var(--ed-placeholder);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid var(--ed-pop-border);
+}
+
+.bn-root.bn-container .bn-suggestion-menu-label:first-child {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 4px;
+}
+
+.bn-root.bn-container .bn-suggestion-menu-item[aria-selected="true"],
+.bn-root.bn-container .bn-suggestion-menu-item:hover {
+  background-color: var(--ed-menu-active);
+  color: var(--fg);
+}
