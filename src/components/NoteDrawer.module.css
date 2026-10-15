@@ -1,0 +1,252 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease-out;
+  z-index: 90;
+}
+
+.backdropOpen {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 82vw;
+  max-width: 300px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  transform: translateX(-100%);
+  transition: transform 0.25s ease-out;
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+}
+
+.drawerOpen {
+  transform: translateX(0);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 8px 8px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.actions {
+  display: flex;
+  gap: 2px;
+}
+
+.iconBtn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.iconBtn:hover {
+  background: var(--hover);
+}
+
+.iconBtn svg {
+  width: 19px;
+  height: 19px;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.newBtn {
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.newBtn:hover {
+  filter: brightness(1.08);
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.statCell {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 4px;
+  text-align: center;
+}
+
+.statNum {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.statLabel {
+  font-size: 11px;
+  color: var(--fg-muted);
+  margin-top: 2px;
+}
+
+.card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.cardTitle {
+  font-size: 12px;
+  color: var(--fg-muted);
+  margin-bottom: 10px;
+}
+
+.streakRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.streakBig {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.streakText {
+  font-size: 13px;
+}
+
+.streakSub {
+  font-size: 12px;
+  color: var(--fg-muted);
+  margin-top: 2px;
+}
+
+.heatLegend {
+  font-size: 11px;
+  color: var(--fg-muted);
+  margin-top: 8px;
+}
+
+.bars {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.barCol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.barTrack {
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: flex-end;
+  background: var(--hover);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar {
+  width: 100%;
+  background: rgba(35, 131, 226, 0.45);
+  border-radius: 4px 4px 0 0;
+}
+
+.barToday {
+  background: var(--accent);
+}
+
+.barLabel {
+  font-size: 10px;
+  color: var(--fg-muted);
+}
+
+.moodRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.moodTrack {
+  flex: 1;
+  min-width: 0;
+  height: 8px;
+  background: var(--hover);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.moodBar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+}
+
+.moodCount {
+  font-size: 12px;
+  color: var(--fg-muted);
+  min-width: 16px;
+  text-align: right;
+}
+
+.emptySmall {
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+
+@media (min-width: 769px) {
+  .drawer,
+  .backdrop {
+    display: none;
+  }
+}
