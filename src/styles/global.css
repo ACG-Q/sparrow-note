@@ -41,3 +41,20 @@ body {
 .bn-editor {
   --bn-colors-highlights: #2383e225;
 }
+
+.bn-editor {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.bn-editor img,
+.bn-editor video {
+  max-width: 100%;
+  height: auto;
+}
+
+.bn-editor table {
+  max-width: 100%;
+  display: block;
+  overflow-x: auto;
+}
