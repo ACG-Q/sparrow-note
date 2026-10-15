@@ -150,3 +150,39 @@
     font-size: 22px;
   }
 }
+
+.filterRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.filterDate {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  outline: none;
+}
+
+.filterDate:focus {
+  border-color: var(--accent);
+}
+
+.filterClear {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg-muted);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.filterClear:hover {
+  color: var(--fg);
+  background: var(--hover);
+}

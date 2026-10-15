@@ -5,6 +5,7 @@ import {
   collectContacts,
   collectMoods,
   daysUntil,
+  entriesOnDate,
 } from "./lib/aggregate";
 import s from "./SummaryView.module.css";
 
@@ -18,13 +19,28 @@ export function SummaryView({
   onOpenNote: (id: string) => void;
 }) {
   const [tab, setTab] = useState<Tab>("mood");
-  const moods = useMemo(() => collectMoods(notes), [notes]);
-  const contacts = useMemo(() => collectContacts(notes), [notes]);
+  const [filterDate, setFilterDate] = useState("");
+  const moods = useMemo(() => entriesOnDate(collectMoods(notes), filterDate), [notes, filterDate]);
+  const contacts = useMemo(() => entriesOnDate(collectContacts(notes), filterDate), [notes, filterDate]);
   const anniversaries = useMemo(() => collectAnniversaries(notes), [notes]);
 
   return (
     <div className={s.page}>
       <h1 className={s.title}>汇总</h1>
+      <div className={s.filterRow}>
+        <input
+          className={s.filterDate}
+          type="date"
+          value={filterDate}
+          onChange={(e) => setFilterDate(e.target.value)}
+          title="按日期筛选"
+        />
+        {filterDate && (
+          <button className={s.filterClear} onClick={() => setFilterDate("")}>
+            清除
+          </button>
+        )}
+      </div>
       <div className={s.tabs}>
         <button className={tab === "mood" ? `${s.tab} ${s.tabActive}` : s.tab} onClick={() => setTab("mood")}>
           心情回顾 <span className={s.tabCount}>{moods.length}</span>

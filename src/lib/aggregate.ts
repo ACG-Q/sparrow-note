@@ -145,3 +145,8 @@ export function noteMatchesQuery(note: NoteDoc, query: string): boolean {
   if (note.date.includes(q)) return true;
   return plainTextOfBlocks(note.blocks as AppBlock[]).toLowerCase().includes(q);
 }
+
+export function entriesOnDate<T extends { noteDate: string }>(entries: T[], date: string): T[] {
+  if (!date) return entries;
+  return entries.filter((e) => e.noteDate === date);
+}
