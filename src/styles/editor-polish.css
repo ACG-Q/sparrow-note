@@ -92,3 +92,22 @@ html[data-theme="dark"] {
   background-color: var(--ed-menu-active);
   color: var(--fg);
 }
+
+/* 格式工具条：隐藏对齐×3 与缩进×2（与 Notion 桌面端一致的收敛）。
+   trade-off（设计已确认）：对齐/缩进暂无桌面入口。 */
+.bn-root .bn-formatting-toolbar [data-test^="alignText"],
+.bn-root .bn-formatting-toolbar [data-test="nestBlock"],
+.bn-root .bn-formatting-toolbar [data-test="unnestBlock"] {
+  display: none;
+}
+
+/* 浮层统一：工具条与菜单同款边框/阴影 */
+.bn-root.bn-container .bn-toolbar {
+  border: 1px solid var(--ed-pop-border);
+  box-shadow: var(--ed-pop-shadow);
+}
+
+/* 段落下拉与按钮组之间的视觉分组 */
+.bn-root .bn-formatting-toolbar .bn-select {
+  margin-right: 6px;
+}
