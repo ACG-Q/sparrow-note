@@ -49,7 +49,6 @@ export function NoteEditor({
   return (
     <BlockNoteView
       editor={editor}
-      className="bn-editor"
       data-theming="default"
       theme={dark ? "dark" : "light"}
       slashMenu={false}
