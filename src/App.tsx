@@ -94,7 +94,15 @@ export default function App() {
   useEffect(() => {
     const sync = () => {
       const id = parseNoteHash(window.location.hash);
-      setActiveId(id && notesRef.current.some((n) => n.id === id) ? id : null);
+      const valid = id !== null && notesRef.current.some((n) => n.id === id);
+      if (id !== null && !valid) {
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search,
+        );
+      }
+      setActiveId(valid ? id : null);
       setMenuOpen(false);
     };
     window.addEventListener("popstate", sync);
@@ -152,10 +160,11 @@ export default function App() {
   }, []);
 
   const navigate = useCallback((v: NavView) => {
+    closeNote();
     setView(v);
     setDrawerOpen(false);
     setMenuOpen(false);
-  }, []);
+  }, [closeNote]);
 
   const handleCreate = useCallback(() => {
     const note = newNote();
