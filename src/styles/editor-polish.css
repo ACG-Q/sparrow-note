@@ -111,3 +111,26 @@ html[data-theme="dark"] {
 .bn-root .bn-formatting-toolbar .bn-select {
   margin-right: 6px;
 }
+
+/* 块间距：顶层块之间 4px；标题上方 22px（Notion 式呼吸感） */
+.bn-root .bn-editor > .bn-block-group > .bn-block-outer + .bn-block-outer {
+  margin-top: 4px;
+}
+
+.bn-root .bn-editor > .bn-block-group > .bn-block-outer:has(
+    > .bn-block > .bn-block-content[data-content-type="heading"]
+  ) {
+  margin-top: 22px;
+}
+
+/* 引用块：主题化颜色（覆盖 core 写死的 rgb(125,121,122)），保持正体 */
+.bn-root [data-content-type="quote"] blockquote {
+  color: var(--fg-muted);
+  border-left-color: var(--fg-muted);
+}
+
+/* 空段落占位符：去斜体（中文）、提高对比度（覆盖 core italic 与 BN 侧菜单灰） */
+.bn-root .bn-block-content:has(.ProseMirror-trailingBreak:only-child):after {
+  font-style: normal;
+  color: var(--ed-placeholder);
+}

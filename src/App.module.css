@@ -158,7 +158,7 @@
 
 .titleInput::placeholder {
   color: var(--fg-muted);
-  opacity: 0.5;
+  opacity: 1;
 }
 
 .dateInput {
