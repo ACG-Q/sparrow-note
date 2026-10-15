@@ -4,9 +4,23 @@ import { NoteEditor } from "./editor/NoteEditor";
 import { SummaryView } from "./SummaryView";
 import { ProfileView } from "./ProfileView";
 import { TimelineView } from "./TimelineView";
+import { Sidebar } from "./components/Sidebar";
+import { NoteList } from "./components/NoteList";
+import { BottomTabs } from "./components/BottomTabs";
+import { NoteDrawer } from "./components/NoteDrawer";
+import { CommandPalette } from "./components/CommandPalette";
 import { noteMatchesQuery } from "./lib/aggregate";
-import { resolveDark, useThemePref } from "./lib/theme";
-import { MenuIcon, UserIcon } from "./ui/icons";
+import type { NavView } from "./lib/nav";
+import { noteHash, parseNoteHash } from "./lib/nav";
+import { nextThemePref, resolveDark, setThemePref, useThemePref } from "./lib/theme";
+import {
+  CardIcon,
+  ChevronLeftIcon,
+  ListIcon,
+  MenuIcon,
+  MoreIcon,
+  SearchIcon,
+} from "./ui/icons";
 import s from "./App.module.css";
 
 function today(): string {
@@ -31,11 +45,21 @@ export default function App() {
   const [notes, setNotes] = useState<NoteDoc[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [view, setView] = useState<"timeline" | "note" | "summary" | "profile">("timeline");
+  const [view, setView] = useState<NavView>("timeline");
   const [query, setQuery] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [listMode, setListMode] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const themePref = useThemePref();
+  const dateInputRef = useRef<HTMLInputElement>(null);
+  const pushedRef = useRef(false);
+  const notesRef = useRef(notes);
+  notesRef.current = notes;
+
+  const [isNarrow, setIsNarrow] = useState(
+    () => window.matchMedia("(max-width: 768px)").matches,
+  );
 
   useEffect(() => {
     const apply = () => {
@@ -48,72 +72,118 @@ export default function App() {
     return () => mq.removeEventListener("change", apply);
   }, [themePref]);
 
-  const bootRef = useRef(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    const onChange = () => setIsNarrow(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
+  const bootRef = useRef(false);
   useEffect(() => {
     if (bootRef.current) return;
     bootRef.current = true;
     listNotes().then((all) => {
-      if (all.length === 0) {
-        const note = newNote();
-        putNote(note).then(() => {
-          setNotes([note]);
-          setActiveId(note.id);
-          setLoaded(true);
-        });
-      } else {
-        setNotes(all);
-        setActiveId(all[0].id);
-        setLoaded(true);
-      }
+      setNotes(all);
+      const fromHash = parseNoteHash(window.location.hash);
+      setActiveId(fromHash && all.some((n) => n.id === fromHash) ? fromHash : null);
+      setLoaded(true);
     });
   }, []);
 
-  const active = notes.find((n) => n.id === activeId) ?? null;
+  useEffect(() => {
+    const sync = () => {
+      const id = parseNoteHash(window.location.hash);
+      setActiveId(id && notesRef.current.some((n) => n.id === id) ? id : null);
+      setMenuOpen(false);
+    };
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        setPaletteOpen(false);
+        setDrawerOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const active = activeId ? notes.find((n) => n.id === activeId) ?? null : null;
+  const editing = active !== null;
 
   const visibleNotes = useMemo(
-    () =>
-      notes.filter((n) => {
-        if (dateFilter && n.date !== dateFilter) return false;
-        return noteMatchesQuery(n, query);
-      }),
-    [notes, query, dateFilter],
+    () => notes.filter((n) => noteMatchesQuery(n, query)),
+    [notes, query],
   );
+
+  const openNote = useCallback((id: string) => {
+    const target = noteHash(id);
+    if (window.location.hash !== target) {
+      window.history.pushState(null, "", target);
+      pushedRef.current = true;
+    }
+    setActiveId(id);
+    setDrawerOpen(false);
+    setPaletteOpen(false);
+    setMenuOpen(false);
+  }, []);
+
+  const closeNote = useCallback(() => {
+    if (pushedRef.current) {
+      pushedRef.current = false;
+      window.history.back();
+      return;
+    }
+    window.history.replaceState(
+      null,
+      "",
+      window.location.pathname + window.location.search,
+    );
+    setActiveId(null);
+  }, []);
+
+  const navigate = useCallback((v: NavView) => {
+    setView(v);
+    setDrawerOpen(false);
+    setMenuOpen(false);
+  }, []);
 
   const handleCreate = useCallback(() => {
     const note = newNote();
     putNote(note).then(() => {
       setNotes((prev) => [note, ...prev]);
-      setActiveId(note.id);
-      setView("note");
-      setSidebarOpen(false);
+      setQuery("");
+      openNote(note.id);
     });
-  }, []);
-
-  const openTimeline = useCallback(() => {
-    setView("timeline");
-    setSidebarOpen(false);
-  }, []);
+  }, [openNote]);
 
   const handleDelete = useCallback(
     (id: string) => {
       deleteNote(id).then(() => {
-        setNotes((prev) => {
-          const next = prev.filter((n) => n.id !== id);
-          if (activeId === id) {
-            setActiveId(next[0]?.id ?? null);
-          }
-          if (next.length === 0) {
-            const note = newNote();
-            putNote(note);
-            setActiveId(note.id);
-            return [note];
-          }
-          return next;
-        });
+        const next = notesRef.current.filter((n) => n.id !== id);
+        setNotes(next);
+        if (activeId !== id) return;
+        if (next.length > 0) {
+          openNote(next[0].id);
+        } else {
+          const note = newNote();
+          putNote(note).then(() => {
+            setNotes([note]);
+            openNote(note.id);
+          });
+        }
       });
     },
-    [activeId],
+    [activeId, openNote],
   );
 
   const handleTitleChange = useCallback(
@@ -136,170 +206,222 @@ export default function App() {
     [active],
   );
 
-  const openNote = useCallback((id: string) => {
-    setActiveId(id);
-    setView("note");
-    setSidebarOpen(false);
-  }, []);
-
   const reloadNotes = useCallback(() => {
     listNotes().then((all) => {
       setNotes(all);
-      setActiveId(all[0]?.id ?? null);
-      setView("note");
+      setActiveId(null);
+      pushedRef.current = false;
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search,
+      );
     });
+  }, []);
+
+  const cycleTheme = useCallback(() => {
+    setThemePref(nextThemePref(themePref));
+  }, [themePref]);
+
+  const pickDate = useCallback((date: string) => {
+    setQuery(date);
+    setListMode(true);
+    setView("timeline");
+    setDrawerOpen(false);
   }, []);
 
   if (!loaded) return <div className={s.loading}>加载中…</div>;
 
+  const title = editing
+    ? active?.title || "无标题"
+    : view === "summary"
+      ? "汇总"
+      : view === "profile"
+        ? "我的"
+        : "时间线";
+
   return (
-    <div className={sidebarOpen ? `${s.app} ${s.sidebarOpen}` : s.app}>
-      <div className={s.topbar}>
-        <button className={s.btnMenu} onClick={() => setSidebarOpen((v) => !v)} aria-label="菜单">
-          <MenuIcon />
-        </button>
-        <span className={s.topbarTitle}>
-          {view === "summary"
-            ? "汇总"
-            : view === "profile"
-              ? "我的"
-              : view === "timeline"
-                ? "时间线"
-                : active?.title || "无标题"}
-        </span>
-        <button className={s.btnNew} onClick={handleCreate}>
-          ＋
-        </button>
-      </div>
-      <aside className={s.sidebar}>
-        <div className={s.sidebarHeader}>
-          <span className={s.appName}>麻雀记</span>
-          <button className={`${s.btnNew} ${s.btnNewFull}`} onClick={handleCreate}>
-            ＋ 新笔记
-          </button>
-        </div>
-        <div className={s.sidebarFilters}>
-          <input
-            className={s.searchInput}
-            placeholder="搜索标题或正文…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <div className={s.filterRow}>
-            <input
-              className={s.dateFilter}
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              title="按日期筛选"
-            />
-            {(query || dateFilter) && (
-              <button
-                className={s.btnClear}
-                onClick={() => {
-                  setQuery("");
-                  setDateFilter("");
-                }}
-              >
-                清除
+    <div className={s.app}>
+      <Sidebar
+        view={view}
+        activeId={activeId}
+        notes={visibleNotes}
+        query={query}
+        onQueryChange={setQuery}
+        onNavigate={navigate}
+        onOpenNote={openNote}
+        onDeleteNote={handleDelete}
+        onCreate={handleCreate}
+        themePref={themePref}
+        onCycleTheme={cycleTheme}
+      />
+      <div className={s.mainCol}>
+        <header className={s.topbar}>
+          {editing ? (
+            <>
+              <button className={s.btnIcon} onClick={closeNote} aria-label="返回">
+                <ChevronLeftIcon />
               </button>
-            )}
-          </div>
-        </div>
-        <button
-          className={view === "timeline" ? `${s.btnSummary} ${s.btnSummaryActive}` : s.btnSummary}
-          onClick={openTimeline}
-        >
-          时间线
-        </button>
-        <button
-          className={view === "summary" ? `${s.btnSummary} ${s.btnSummaryActive}` : s.btnSummary}
-          onClick={() => {
-            setView(view === "summary" ? "timeline" : "summary");
-            setSidebarOpen(false);
-          }}
-        >
-          汇总视图
-        </button>
-        <button
-          className={view === "profile" ? `${s.btnSummary} ${s.btnSummaryActive}` : s.btnSummary}
-          onClick={() => {
-            setView("profile");
-            setSidebarOpen(false);
-          }}
-        >
-          <span className={s.btnSummaryIcon}>
-            <UserIcon />
-          </span>
-          我的
-        </button>
-        <nav className={s.noteList}>
-          {visibleNotes.length === 0 && <div className={s.noteListEmpty}>没有匹配的笔记</div>}
-          {visibleNotes.map((n) => (
-            <div
-              key={n.id}
-              className={n.id === activeId ? `${s.noteItem} ${s.noteItemActive}` : s.noteItem}
-              onClick={() => openNote(n.id)}
-            >
-              <div className={s.noteItemTitle}>{n.title || "无标题"}</div>
-              <div className={s.noteItemMeta}>
-                <span>{n.date}</span>
+              <span className={s.topbarTitle}>{title}</span>
+              <button
+                className={`${s.btnIcon} ${s.onlyMobile}`}
+                onClick={() => setDrawerOpen(true)}
+                aria-label="菜单"
+              >
+                <MenuIcon />
+              </button>
+              <div className={s.menuWrap}>
                 <button
-                  className={s.btnDelete}
-                  title="删除"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(n.id);
-                  }}
+                  className={`${s.btnIcon} ${s.onlyMobile}`}
+                  onClick={() => setMenuOpen((v) => !v)}
+                  aria-label="更多操作"
                 >
-                  ×
+                  <MoreIcon />
                 </button>
+                {menuOpen && (
+                  <>
+                    <div className={s.popBackdrop} onClick={() => setMenuOpen(false)} />
+                    <div className={s.popMenu}>
+                      <button
+                        className={s.popItem}
+                        onClick={() => {
+                          dateInputRef.current?.focus();
+                          setMenuOpen(false);
+                        }}
+                      >
+                        改日期
+                      </button>
+                      {active && (
+                        <button
+                          className={`${s.popItem} ${s.popItemDanger}`}
+                          onClick={() => {
+                            handleDelete(active.id);
+                            setMenuOpen(false);
+                          }}
+                        >
+                          删除笔记
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-          ))}
-        </nav>
-      </aside>
-      <div className={s.sidebarBackdrop} onClick={() => setSidebarOpen(false)} />
-      <main className={s.main}>
-        {view === "timeline" ? (
-          <TimelineView notes={visibleNotes} onOpenNote={openNote} onDeleteNote={handleDelete} />
-        ) : view === "summary" ? (
-          <SummaryView notes={notes} onOpenNote={openNote} />
-        ) : view === "profile" ? (
-          <ProfileView notes={notes} onDataCleared={reloadNotes} />
-        ) : active ? (
-          <div className={s.editorPage} key={active.id}>
-            <div className={s.editorHeader}>
-              <input
-                className={s.titleInput}
-                placeholder="无标题"
-                value={active.title}
-                onChange={(e) => handleTitleChange(e.target.value)}
-              />
-              <div>
+              <button
+                className={`${s.btnIcon} ${s.onlyDesktop}`}
+                onClick={() => setPaletteOpen(true)}
+                aria-label="搜索"
+              >
+                <SearchIcon />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className={`${s.btnIcon} ${s.onlyMobile}`}
+                onClick={() => setDrawerOpen(true)}
+                aria-label="菜单"
+              >
+                <MenuIcon />
+              </button>
+              <span className={s.topbarTitle}>{title}</span>
+              {view === "timeline" && (
+                <button
+                  className={`${s.btnIcon} ${s.onlyMobile}`}
+                  onClick={() => setListMode((v) => !v)}
+                  aria-label={listMode ? "切换到卡片流" : "切换到列表"}
+                  title={listMode ? "卡片流" : "紧凑列表"}
+                >
+                  {listMode ? <CardIcon /> : <ListIcon />}
+                </button>
+              )}
+              <button
+                className={`${s.btnIcon} ${s.onlyDesktop}`}
+                onClick={() => setPaletteOpen(true)}
+                aria-label="搜索"
+              >
+                <SearchIcon />
+              </button>
+            </>
+          )}
+        </header>
+        <main className={s.main}>
+          {active ? (
+            <div className={s.editorPage} key={active.id}>
+              <div className={s.editorHeader}>
                 <input
-                  className={s.dateInput}
-                  type="date"
-                  value={active.date}
-                  onChange={(e) => {
-                    const updated = { ...active, date: e.target.value, updatedAt: Date.now() };
-                    putNote(updated);
-                    setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
-                  }}
+                  className={s.titleInput}
+                  placeholder="无标题"
+                  value={active.title}
+                  onChange={(e) => handleTitleChange(e.target.value)}
+                />
+                <div>
+                  <input
+                    ref={dateInputRef}
+                    className={s.dateInput}
+                    type="date"
+                    value={active.date}
+                    onChange={(e) => {
+                      const updated = { ...active, date: e.target.value, updatedAt: Date.now() };
+                      putNote(updated);
+                      setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+                    }}
+                  />
+                </div>
+              </div>
+              <NoteEditor initialContent={active.blocks} onChange={handleBlocksChange} />
+            </div>
+          ) : view === "timeline" ? (
+            isNarrow && listMode ? (
+              <div className={s.listMode}>
+                <NoteList
+                  notes={visibleNotes}
+                  activeId={activeId}
+                  query={query}
+                  onQueryChange={setQuery}
+                  onOpenNote={openNote}
+                  onDeleteNote={handleDelete}
+                  onCreate={handleCreate}
                 />
               </div>
-            </div>
-            <NoteEditor initialContent={active.blocks} onChange={handleBlocksChange} />
-          </div>
-        ) : (
-          <div className={s.emptyState}>选择或创建一条笔记</div>
-        )}
-        {view === "timeline" && (
-          <button className={s.fab} onClick={handleCreate} aria-label="新建今日笔记">
-            ＋
-          </button>
-        )}
-      </main>
+            ) : (
+              <TimelineView
+                notes={visibleNotes}
+                onOpenNote={openNote}
+                onDeleteNote={handleDelete}
+                onCreate={handleCreate}
+              />
+            )
+          ) : view === "summary" ? (
+            <SummaryView notes={notes} onOpenNote={openNote} />
+          ) : (
+            <ProfileView notes={notes} onDataCleared={reloadNotes} />
+          )}
+        </main>
+      </div>
+      {!editing && <BottomTabs view={view} onNavigate={navigate} />}
+      {!editing && view === "timeline" && (
+        <button className={s.fab} onClick={handleCreate} aria-label="新建笔记">
+          ＋
+        </button>
+      )}
+      <NoteDrawer
+        open={drawerOpen}
+        notes={notes}
+        themePref={themePref}
+        onCycleTheme={cycleTheme}
+        onClose={() => setDrawerOpen(false)}
+        onCreate={handleCreate}
+        onOpenSettings={() => navigate("profile")}
+        onPickDate={pickDate}
+      />
+      <CommandPalette
+        open={paletteOpen}
+        notes={visibleNotes}
+        query={query}
+        onQueryChange={setQuery}
+        onOpenNote={openNote}
+        onClose={() => setPaletteOpen(false)}
+      />
     </div>
   );
 }

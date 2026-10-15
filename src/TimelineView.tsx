@@ -20,10 +20,12 @@ export function TimelineView({
   notes,
   onOpenNote,
   onDeleteNote,
+  onCreate,
 }: {
   notes: NoteDoc[];
   onOpenNote: (id: string) => void;
   onDeleteNote: (id: string) => void;
+  onCreate: () => void;
 }) {
   const groups = useMemo(() => {
     const sorted = [...notes].sort((a, b) =>
@@ -41,7 +43,12 @@ export function TimelineView({
   if (notes.length === 0) {
     return (
       <div className={s.page}>
-        <div className={s.empty}>还没有笔记，点击右下角按钮写下今天的第一条</div>
+        <div className={s.empty}>
+          <div>还没有笔记</div>
+          <button className={s.emptyNew} onClick={onCreate}>
+            ＋ 新建一条
+          </button>
+        </div>
       </div>
     );
   }

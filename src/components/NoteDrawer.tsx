@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import type { NoteDoc } from "../db/notes";
 import { heatmap, last7Days, moodCountsThisMonth, streaks, summarize } from "../lib/stats";
 import { themeLabel, type ThemePref } from "../lib/theme";
@@ -32,6 +32,13 @@ export function NoteDrawer({
   const moods = useMemo(() => moodCountsThisMonth(notes), [notes]);
   const maxCount = Math.max(1, ...week.map((d) => d.count));
   const today = week[week.length - 1];
+  const asideRef = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    if (open) return;
+    const el = document.activeElement;
+    if (el instanceof HTMLElement && asideRef.current?.contains(el)) el.blur();
+  }, [open]);
 
   return (
     <>
@@ -39,7 +46,11 @@ export function NoteDrawer({
         className={open ? `${s.backdrop} ${s.backdropOpen}` : s.backdrop}
         onClick={onClose}
       />
-      <aside className={open ? `${s.drawer} ${s.drawerOpen}` : s.drawer} aria-hidden={!open}>
+      <aside
+        ref={asideRef}
+        className={open ? `${s.drawer} ${s.drawerOpen}` : s.drawer}
+        aria-hidden={!open}
+      >
         <div className={s.head}>
           <span className={s.logo}>麻雀记</span>
           <div className={s.actions}>

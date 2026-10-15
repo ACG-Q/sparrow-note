@@ -87,3 +87,19 @@
     padding: 20px 16px 120px;
   }
 }
+
+.emptyNew {
+  display: block;
+  margin: 10px auto 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 12px;
+  min-height: 44px;
+}
+
+.emptyNew:hover {
+  text-decoration: underline;
+}

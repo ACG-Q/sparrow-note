@@ -1,6 +1,7 @@
 .app {
   display: flex;
   height: 100%;
+  min-width: 0;
 }
 
 .loading {
@@ -11,197 +12,126 @@
   color: var(--fg-muted);
 }
 
-.topbar {
-  display: none;
-}
-
-.sidebarBackdrop {
-  display: none;
-}
-
-.sidebar {
-  width: 260px;
-  flex-shrink: 0;
-  background: var(--bg-sidebar);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.sidebarHeader {
-  padding: 14px 14px 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.appName {
-  font-weight: 700;
-  font-size: 15px;
-}
-
-.btnNew {
-  border: none;
-  background: var(--accent);
-  color: #fff;
-  border-radius: 6px;
-  padding: 5px 10px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.btnNew:hover {
-  filter: brightness(1.08);
-}
-
-.btnNewFull {
-  display: none;
-}
-
-.sidebarFilters {
-  padding: 0 10px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.searchInput,
-.dateFilter {
-  width: 100%;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--fg);
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 13px;
-  outline: none;
-}
-
-.searchInput:focus,
-.dateFilter:focus {
-  border-color: var(--accent);
-}
-
-.filterRow {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.dateFilter {
+.mainCol {
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.btnClear {
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--fg-muted);
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 12px;
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-sidebar);
+  flex-shrink: 0;
+  min-height: 48px;
+}
+
+.btnIcon {
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
+  padding: 0;
 }
 
-.btnClear:hover {
-  color: var(--fg);
+.btnIcon:hover {
   background: var(--hover);
 }
 
-.btnSummary {
-  display: block;
-  width: calc(100% - 16px);
-  margin: 0 8px 8px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--fg);
-  border-radius: 6px;
-  padding: 7px 10px;
-  font-size: 13px;
-  cursor: pointer;
-  text-align: left;
+.btnIcon svg {
+  width: 20px;
+  height: 20px;
 }
 
-.btnSummary:hover {
-  background: var(--hover);
+.onlyMobile {
+  display: none;
 }
 
-.btnSummaryActive {
-  border-color: var(--accent);
-  color: var(--accent);
+.onlyDesktop {
+  display: flex;
 }
 
-.btnSummaryIcon {
-  display: inline-flex;
-  vertical-align: -4px;
-  margin-right: 4px;
-}
-
-.noteList {
+.topbarTitle {
   flex: 1;
-  overflow-y: auto;
-  padding: 4px 8px;
-}
-
-.noteListEmpty {
-  color: var(--fg-muted);
-  font-size: 13px;
-  text-align: center;
-  padding: 24px 0;
-}
-
-.noteItem {
-  padding: 8px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.noteItem:hover,
-.noteItemActive {
-  background: var(--hover);
-}
-
-.noteItemTitle {
-  font-size: 14px;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  padding: 0 4px;
 }
 
-.noteItemMeta {
+.menuWrap {
+  position: relative;
+}
+
+.popBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 65;
+  background: transparent;
+}
+
+.popMenu {
+  position: absolute;
+  right: 0;
+  top: 46px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  min-width: 140px;
+  z-index: 70;
+  padding: 4px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-  color: var(--fg-muted);
-  margin-top: 2px;
+  flex-direction: column;
 }
 
-.btnDelete {
+.popItem {
   border: none;
   background: transparent;
-  color: var(--fg-muted);
+  color: var(--fg);
+  text-align: left;
+  padding: 0 12px;
   font-size: 14px;
   cursor: pointer;
-  padding: 0 4px;
-  border-radius: 4px;
-  visibility: hidden;
+  border-radius: 6px;
+  min-height: 44px;
 }
 
-.noteItem:hover .btnDelete {
-  visibility: visible;
-}
-
-.btnDelete:hover {
+.popItem:hover {
   background: var(--hover);
+}
+
+.popItemDanger {
   color: #e03e3e;
 }
 
 .main {
   flex: 1;
+  min-width: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.listMode {
+  min-height: 100%;
+  background: var(--bg-sidebar);
+  padding: 10px 14px;
 }
 
 .editorPage {
@@ -240,18 +170,10 @@
   font-size: 13px;
 }
 
-.emptyState {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--fg-muted);
-}
-
 .fab {
   position: fixed;
-  right: 28px;
-  bottom: 28px;
+  right: 20px;
+  bottom: calc(70px + env(safe-area-inset-bottom));
   width: 52px;
   height: 52px;
   border-radius: 50%;
@@ -263,10 +185,11 @@
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(35, 131, 226, 0.35);
   z-index: 40;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   transition: transform 0.12s, box-shadow 0.12s;
+  padding: 0;
 }
 
 .fab:hover {
@@ -274,86 +197,25 @@
   box-shadow: 0 6px 16px rgba(35, 131, 226, 0.45);
 }
 
-.btnMenu {
-  border: none;
-  background: transparent;
-  color: var(--fg);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-}
-
-.btnMenu:hover {
-  background: var(--hover);
-}
-
-.topbarTitle {
-  display: none;
-}
-
 @media (max-width: 768px) {
   .app {
     flex-direction: column;
   }
 
-  .topbar {
+  .onlyMobile {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg-sidebar);
-    flex-shrink: 0;
   }
 
-  .topbarTitle {
-    display: block;
-    flex: 1;
-    font-size: 15px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .sidebar {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 60;
-    transform: translateX(-100%);
-    transition: transform 0.2s ease;
-    box-shadow: none;
-  }
-
-  .sidebarOpen .sidebar {
-    transform: translateX(0);
-    box-shadow: 0 0 24px rgba(0, 0, 0, 0.2);
-  }
-
-  .sidebarBackdrop {
+  .onlyDesktop {
     display: none;
   }
 
-  .sidebarOpen .sidebarBackdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-    background: rgba(0, 0, 0, 0.3);
+  .topbar {
+    padding: 4px 6px;
   }
 
-  .btnNewFull {
-    display: inline-block;
-  }
-
-  .main {
-    flex: 1;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+  .fab {
+    display: flex;
   }
 
   .editorPage {
