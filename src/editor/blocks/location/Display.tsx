@@ -1,26 +1,17 @@
-import { PinIcon } from "../../icons";
 import s from "./styles.module.css";
 import shared from "../_shared/blockCommon.module.css";
 import { amapLink, type LocationBlockT } from "./config";
 
-export default function LocationDisplay({
-  block,
-  onEdit,
-}: {
-  block: LocationBlockT;
-  onEdit: () => void;
-}) {
+export default function LocationDisplay({ block }: { block: LocationBlockT }) {
   const { name, addr } = block.props;
   const keyword = `${name} ${addr}`.trim();
+  if (!name && !addr) {
+    return <span className={shared.empty}>点击填写地点</span>;
+  }
   return (
-    <div className={`${shared.display} ${s.root}`} onClick={onEdit} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter") onEdit(); }}>
-      <span className={s.pin} contentEditable={false}>
-        <PinIcon />
-      </span>
-      <div className={s.body}>
-        <span className={s.name}>{name || "未命名地点"}</span>
-        {addr && <span className={s.addr}>{addr}</span>}
-      </div>
+    <div className={s.body}>
+      <span className={s.name}>{name || "未命名地点"}</span>
+      {addr && <span className={s.addr}>{addr}</span>}
       {keyword && (
         <a
           className={s.map}
@@ -33,9 +24,6 @@ export default function LocationDisplay({
           地图
         </a>
       )}
-      <span className={shared.editHint} contentEditable={false}>
-        点击编辑
-      </span>
     </div>
   );
 }

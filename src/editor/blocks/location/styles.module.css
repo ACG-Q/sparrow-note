@@ -1,40 +1,19 @@
-.root {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 10px 14px;
-  background: linear-gradient(135deg, #ecfdf5, #eff6ff);
-}
-
-.pin {
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #10b981;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 17px;
-}
-
 .body {
-  flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
   min-width: 0;
 }
 
 .name {
-  font-size: 14px;
   font-weight: 600;
 }
 
 .addr {
   font-size: 12.5px;
   color: var(--fg-muted);
+  overflow-wrap: anywhere;
 }
 
 .map {
@@ -42,35 +21,10 @@
   font-size: 13px;
   color: var(--accent);
   text-decoration: none;
-  padding: 4px 8px;
+  padding: 2px 6px;
   border-radius: 6px;
 }
 
 .map:hover {
   background: var(--hover);
-}
-
-.editRoot {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 14px;
-  margin: 4px 0;
-  background: linear-gradient(135deg, #ecfdf5, #eff6ff);
-  flex-wrap: wrap;
-}
-
-.nameInput,
-.addrInput {
-  border: none;
-  background: transparent;
-  padding: 2px 0;
-  width: 100%;
-}
-
-.addrInput {
-  font-size: 13px;
-  color: var(--fg-muted);
 }

@@ -4,6 +4,12 @@ import AnniversaryEdit from "../anniversary/Edit";
 import type { AnniversaryBlockT, AnniversaryEditor } from "../anniversary/config";
 import ContactEdit from "../contact/Edit";
 import type { ContactBlockT, ContactEditor } from "../contact/config";
+import LocationEdit from "../location/Edit";
+import type { LocationBlockT, LocationEditor } from "../location/config";
+import AccountEdit from "../account/Edit";
+import type { AccountBlockT, AccountEditor } from "../account/config";
+import BookmarkEdit from "../bookmark/Edit";
+import type { BookmarkBlockT, BookmarkEditor } from "../bookmark/config";
 
 export type PanelFormProps = {
   block: AppBlock;
@@ -23,6 +29,24 @@ export const EDIT_FORMS: Record<string, (p: PanelFormProps) => ReactElement> = {
     <ContactEdit
       block={block as unknown as ContactBlockT}
       editor={editor as unknown as ContactEditor}
+    />
+  ),
+  location: ({ block, editor }) => (
+    <LocationEdit
+      block={block as unknown as LocationBlockT}
+      editor={editor as unknown as LocationEditor}
+    />
+  ),
+  account: ({ block, editor }) => (
+    <AccountEdit
+      block={block as unknown as AccountBlockT}
+      editor={editor as unknown as AccountEditor}
+    />
+  ),
+  bookmark: ({ block, editor }) => (
+    <BookmarkEdit
+      block={block as unknown as BookmarkBlockT}
+      editor={editor as unknown as BookmarkEditor}
     />
   ),
 };

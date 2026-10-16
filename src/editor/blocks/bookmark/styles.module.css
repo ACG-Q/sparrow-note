@@ -1,38 +1,19 @@
-.root {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 8px 12px;
-}
-
-.icon {
-  font-size: 18px;
-  flex: none;
-  color: var(--accent);
-}
-
 .body {
-  flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
   min-width: 0;
 }
 
 .title {
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 600;
 }
 
 .url {
-  font-size: 12.5px;
   color: var(--fg-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
 }
 
 .open {
@@ -40,34 +21,10 @@
   font-size: 13px;
   color: var(--accent);
   text-decoration: none;
-  padding: 4px 8px;
+  padding: 2px 6px;
   border-radius: 6px;
 }
 
 .open:hover {
   background: var(--hover);
-}
-
-.editRoot {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  margin: 4px 0;
-  flex-wrap: wrap;
-}
-
-.titleInput,
-.urlInput {
-  border: none;
-  background: transparent;
-  padding: 1px 0;
-  width: 100%;
-}
-
-.urlInput {
-  font-size: 12.5px;
-  color: var(--fg-muted);
 }
