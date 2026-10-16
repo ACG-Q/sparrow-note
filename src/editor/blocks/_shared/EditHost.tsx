@@ -2,9 +2,70 @@ import { useEffect, useReducer } from "react";
 import { useEditorChange } from "@blocknote/react";
 import { useBlockEdit, useIsMobile } from "./BlockEditContext";
 import { EDIT_FORMS, type PanelFormProps } from "./editForms";
-import { EditBar } from "./BlockShell";
+import { BlockIcon } from "../../icons";
 import type { AppBlock } from "../../schema";
 import s from "./EditHost.module.css";
+
+function siteHost(url?: string): string {
+  if (!url) return "";
+  try {
+    return new URL(url).host;
+  } catch {
+    return "";
+  }
+}
+
+function PanelHead({
+  type,
+  label,
+  block,
+  onClose,
+}: {
+  type: string;
+  label: string;
+  block: AppBlock;
+  onClose: () => void;
+}) {
+  const props = block.props as Record<string, string>;
+  let icon: React.ReactNode = <BlockIcon type={type} />;
+  let title = label;
+  let sub = "";
+  if (type === "contact") {
+    icon = <span className={s.headAvatar}>{(props.name || "?").slice(0, 1)}</span>;
+    title = props.name || "新建联系人";
+    sub = "保存到笔记的联系人块";
+  } else if (type === "account") {
+    icon = <span className={s.headLogo}>{(props.site || "?").slice(0, 1).toUpperCase()}</span>;
+    title = props.site || "账号";
+    sub = [props.user, siteHost(props.url)].filter(Boolean).join(" · ") || "站点凭据管理";
+  } else if (type === "anniversary") {
+    sub = "正计时 · 倒计时 · 纪念日";
+  } else if (type === "location") {
+    sub = "定位获取 · 手动兜底";
+  } else if (type === "bookmark") {
+    sub = "保存网页链接";
+  } else if (type === "bankcard") {
+    sub = "卡面实时预览";
+  }
+  return (
+    <div className={s.head} contentEditable={false}>
+      <span className={s.headIcon}>{icon}</span>
+      <div className={s.headTitles}>
+        <div className={s.headTitle}>{title}</div>
+        {sub && <div className={s.headSub}>{sub}</div>}
+      </div>
+      <button
+        type="button"
+        className={s.headClose}
+        aria-label="关闭"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={onClose}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
 
 export function EditHost() {
   const { editor, pending, close } = useBlockEdit();
@@ -38,10 +99,29 @@ export function EditHost() {
     onDone: close,
     onCancel: close,
   };
+  const head = <PanelHead type={pending.type} label={pending.label} block={block} onClose={close} />;
 
   if (pending.container === "side") {
-    const bar = (
-      <EditBar onDone={close} onCancel={close} typeLabel={pending.label} iconType={pending.iconType} />
+    const foot = (
+      <div className={s.foot} contentEditable={false}>
+        <span className={s.footHint}>Esc 取消</span>
+        <button
+          type="button"
+          className={s.btnCancel}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={close}
+        >
+          取消
+        </button>
+        <button
+          type="button"
+          className={s.btnDone}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={close}
+        >
+          完成
+        </button>
+      </div>
     );
     if (mobile) {
       return (
@@ -49,28 +129,33 @@ export function EditHost() {
           <div className={s.backdrop} onClick={close} contentEditable={false} />
           <div className={s.drawer} contentEditable={false}>
             <div className={s.handle} />
-            <Form {...formProps} />
-            {bar}
+            {head}
+            <div className={s.body}>
+              <Form {...formProps} />
+            </div>
+            {foot}
           </div>
         </>
       );
     }
     return (
       <div className={s.side} contentEditable={false}>
-        <Form {...formProps} />
-        {bar}
+        {head}
+        <div className={s.body}>
+          <Form {...formProps} />
+        </div>
+        {foot}
       </div>
     );
   }
 
   return (
     <div className={s.modalBackdrop} onClick={close} contentEditable={false}>
-      <div
-        className={s.modal}
-        onClick={(e) => e.stopPropagation()}
-        contentEditable={false}
-      >
-        <Form {...formProps} />
+      <div className={s.modal} onClick={(e) => e.stopPropagation()} contentEditable={false}>
+        {head}
+        <div className={s.modalBody}>
+          <Form {...formProps} />
+        </div>
       </div>
     </div>
   );
