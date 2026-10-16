@@ -1,15 +1,40 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
+import { BlockIcon, PencilIcon } from "../../icons";
+import { useBlockEdit } from "../_shared/BlockEditContext";
+import { ActionBtn, BlockCard, useStartEmpty } from "../_shared/BlockShell";
 import { anniversaryConfig, type AnniversaryProps } from "./config";
 import AnniversaryDisplay from "./Display";
-import AnniversaryEdit from "./Edit";
 
-function AnniversaryRender({ block, editor }: AnniversaryProps) {
-  const [editing, setEditing] = useState(() => !(block.props.title || block.props.date));
-  if (editing) {
-    return <AnniversaryEdit block={block} editor={editor} onDone={() => setEditing(false)} />;
-  }
-  return <AnniversaryDisplay block={block} onEdit={() => setEditing(true)} />;
+function AnniversaryRender({ block }: AnniversaryProps) {
+  const { pending, open, close } = useBlockEdit();
+  const startEmpty = useStartEmpty(block.props.title, block.props.date);
+  const openEdit = () =>
+    open({
+      blockId: block.id,
+      container: "side",
+      type: "anniversary",
+      label: "纪念日",
+      iconType: "anniversary",
+    });
+
+  useEffect(() => {
+    if (!startEmpty) return;
+    openEdit();
+    return close;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <BlockCard
+      chip={<BlockIcon type="anniversary" />}
+      active={pending?.blockId === block.id}
+      onClick={openEdit}
+      actions={<ActionBtn icon={<PencilIcon />} label="编辑纪念日" onClick={openEdit} />}
+    >
+      <AnniversaryDisplay block={block} />
+    </BlockCard>
+  );
 }
 
 export const AnniversaryBlock = createReactBlockSpec(anniversaryConfig, {

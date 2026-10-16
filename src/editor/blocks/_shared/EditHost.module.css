@@ -1,6 +1,6 @@
 .side {
-  position: absolute;
-  top: 0;
+  position: fixed;
+  top: var(--app-topbar-h, 57px);
   right: 0;
   bottom: 0;
   width: 280px;
@@ -12,6 +12,22 @@
   flex-direction: column;
   padding: 14px;
   overflow-y: auto;
+  animation: sideIn 0.18s ease-out;
+}
+
+@keyframes sideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .side {
+    animation: none;
+  }
 }
 
 .backdrop {

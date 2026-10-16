@@ -7,6 +7,8 @@
   --accent: #2383e2;
   --accent-soft: rgba(35, 131, 226, 0.12);
   --hover: rgba(55, 53, 47, 0.06);
+  /* 必须 ≥ App .topbar 实际高度（44px 按钮 + 12px padding + 1px 边框），供全高定位面板让位 */
+  --app-topbar-h: 57px;
   color-scheme: light;
 }
 

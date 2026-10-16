@@ -1,11 +1,3 @@
-.root {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding: 10px 12px;
-}
-
 .title {
   font-size: 14px;
   font-weight: 600;
@@ -29,21 +21,17 @@
   background: #e03e3e1a;
 }
 
-.editRoot {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin: 4px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
 .titleInput {
   min-width: 160px;
 }
 
 .dateInput {
   max-width: 160px;
+}
+
+.title,
+.date,
+.countdown {
+  display: inline-flex;
+  align-items: center;
 }
