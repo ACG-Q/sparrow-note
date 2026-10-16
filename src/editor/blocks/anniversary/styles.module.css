@@ -8,30 +8,53 @@
   color: var(--fg-muted);
 }
 
-.countdown {
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.num {
   font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-radius: 6px;
+  padding: 1px 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tag {
+  font-size: 11px;
   color: var(--fg-muted);
-  background: var(--hover);
-  border-radius: 999px;
-  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0 6px;
 }
 
-.urgent {
-  color: #e03e3e;
-  background: #e03e3e1a;
+.preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 10px 12px;
 }
 
-.titleInput {
-  min-width: 160px;
-}
-
-.dateInput {
-  max-width: 160px;
+.previewName {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 13.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .title,
-.date,
-.countdown {
+.date {
   display: inline-flex;
   align-items: center;
 }

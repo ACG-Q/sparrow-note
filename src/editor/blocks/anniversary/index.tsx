@@ -14,7 +14,7 @@ function AnniversaryRender({ block }: AnniversaryProps) {
       blockId: block.id,
       container: "side",
       type: "anniversary",
-      label: "纪念日",
+      label: "日子",
       iconType: "anniversary",
     });
 
@@ -30,7 +30,7 @@ function AnniversaryRender({ block }: AnniversaryProps) {
       chip={<BlockIcon type="anniversary" />}
       active={pending?.blockId === block.id}
       onClick={openEdit}
-      actions={<ActionBtn icon={<PencilIcon />} label="编辑纪念日" onClick={openEdit} />}
+      actions={<ActionBtn icon={<PencilIcon />} label="编辑日子" onClick={openEdit} />}
     >
       <AnniversaryDisplay block={block} />
     </BlockCard>
