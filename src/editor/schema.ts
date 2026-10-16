@@ -1,4 +1,5 @@
 import { BlockNoteSchema, defaultBlockSpecs, defaultInlineContentSpecs, defaultStyleSpecs } from "@blocknote/core";
+import type { BlockNoteEditor } from "@blocknote/core";
 import { MoodBlock } from "./blocks/mood/index";
 import { ContactBlock } from "./blocks/contact/index";
 import { AnniversaryBlock } from "./blocks/anniversary/index";
@@ -31,3 +32,8 @@ export const schema = BlockNoteSchema.create({
 export type AppSchema = typeof schema;
 type Doc = (typeof schema)["BlockNoteEditor"]["document"];
 export type AppBlock = Doc extends Array<infer B> ? B : never;
+export type AppEditor = BlockNoteEditor<
+  AppSchema["blockSchema"],
+  AppSchema["inlineContentSchema"],
+  AppSchema["styleSchema"]
+>;

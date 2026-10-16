@@ -8,6 +8,8 @@ import {
 import { BlockNoteView } from "@blocknote/mantine";
 import { schema, type AppBlock } from "./schema";
 import { getSlashItems, filterSlashItems } from "./slashMenu";
+import { BlockEditProvider } from "./blocks/_shared/BlockEditContext";
+import { EditHost } from "./blocks/_shared/EditHost";
 import { usePrefersDark } from "../lib/usePrefersDark";
 import { fileToDataURL } from "../lib/media";
 
@@ -47,16 +49,21 @@ export function NoteEditor({
   const dark = usePrefersDark();
 
   return (
-    <BlockNoteView
-      editor={editor}
-      data-theming="default"
-      theme={dark ? "dark" : "light"}
-      slashMenu={false}
-    >
-      <SuggestionMenuController
-        triggerCharacter="/"
-        getItems={async (query) => filterSlashItems(slashItems, query)}
-      />
-    </BlockNoteView>
+    <BlockEditProvider editor={editor}>
+      <div style={{ position: "relative" }}>
+        <BlockNoteView
+          editor={editor}
+          data-theming="default"
+          theme={dark ? "dark" : "light"}
+          slashMenu={false}
+        >
+          <SuggestionMenuController
+            triggerCharacter="/"
+            getItems={async (query) => filterSlashItems(slashItems, query)}
+          />
+        </BlockNoteView>
+        <EditHost />
+      </div>
+    </BlockEditProvider>
   );
 }
