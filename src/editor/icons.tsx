@@ -136,3 +136,31 @@ export function LinkIcon() {
     </svg>
   );
 }
+
+export function PencilIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12.6 3.9l3.5 3.5L7.5 16H4v-3.5l8.6-8.6Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M11 5.5l3.5 3.5" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+}
+
+export function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3.5 5.5h13M8 5.5V4a1.5 1.5 0 0 1 1.5-1.5h1A1.5 1.5 0 0 1 12 4v1.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.5 5.5l.7 10a1.5 1.5 0 0 0 1.5 1.4h4.6a1.5 1.5 0 0 0 1.5-1.4l.7-10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8.3 8.7v5M11.7 8.7v5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function MicIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="7.4" y="2.5" width="5.2" height="9.6" rx="2.6" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M4.75 9.75a5.25 5.25 0 0 0 10.5 0M10 15v2.75" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
