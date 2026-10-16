@@ -10,6 +10,8 @@ import AccountEdit from "../account/Edit";
 import type { AccountBlockT, AccountEditor } from "../account/config";
 import BookmarkEdit from "../bookmark/Edit";
 import type { BookmarkBlockT, BookmarkEditor } from "../bookmark/config";
+import BankcardEdit from "../bankcard/Edit";
+import type { BankcardBlockT, BankcardEditor } from "../bankcard/config";
 
 export type PanelFormProps = {
   block: AppBlock;
@@ -47,6 +49,12 @@ export const EDIT_FORMS: Record<string, (p: PanelFormProps) => ReactElement> = {
     <BookmarkEdit
       block={block as unknown as BookmarkBlockT}
       editor={editor as unknown as BookmarkEditor}
+    />
+  ),
+  bankcard: ({ block, editor }) => (
+    <BankcardEdit
+      block={block as unknown as BankcardBlockT}
+      editor={editor as unknown as BankcardEditor}
     />
   ),
 };

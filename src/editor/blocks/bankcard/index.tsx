@@ -1,17 +1,61 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
+import { PencilIcon, TrashIcon } from "../../icons";
+import { useBlockEdit } from "../_shared/BlockEditContext";
+import { ActionBtn, useStartEmpty } from "../_shared/BlockShell";
+import s from "./styles.module.css";
 import { bankcardConfig, type BankcardProps } from "./config";
 import BankcardDisplay from "./Display";
-import BankcardEdit from "./Edit";
 
 function BankcardRender({ block, editor }: BankcardProps) {
-  const [editing, setEditing] = useState(
-    () => !(block.props.bank || block.props.no || block.props.holder),
+  const { pending, open, close } = useBlockEdit();
+  const startEmpty = useStartEmpty(block.props.bank, block.props.no, block.props.holder);
+  const openEdit = () =>
+    open({
+      blockId: block.id,
+      container: "side",
+      type: "bankcard",
+      label: "银行卡",
+      iconType: "bankcard",
+    });
+
+  useEffect(() => {
+    if (!startEmpty) return;
+    openEdit();
+    return close;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div
+      className={pending?.blockId === block.id ? `${s.root} ${s.active}` : s.root}
+      onClick={openEdit}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") openEdit();
+      }}
+    >
+      <BankcardDisplay block={block} />
+      <span className={s.actions} contentEditable={false}>
+        <ActionBtn
+          icon={<PencilIcon />}
+          label="编辑银行卡"
+          light
+          onClick={openEdit}
+        />
+        <ActionBtn
+          icon={<TrashIcon />}
+          label="清空银行卡"
+          light
+          danger
+          onClick={() =>
+            editor.updateBlock(block, { props: { bank: "", no: "", holder: "" } })
+          }
+        />
+      </span>
+    </div>
   );
-  if (editing) {
-    return <BankcardEdit block={block} editor={editor} onDone={() => setEditing(false)} />;
-  }
-  return <BankcardDisplay block={block} onEdit={() => setEditing(true)} />;
 }
 
 export const BankcardBlock = createReactBlockSpec(bankcardConfig, {
