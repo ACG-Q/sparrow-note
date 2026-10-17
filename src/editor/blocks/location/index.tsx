@@ -8,7 +8,7 @@ import LocationDisplay from "./Display";
 
 function LocationRender({ block }: LocationProps) {
   const { pending, open, close } = useBlockEdit();
-  const startEmpty = useStartEmpty(block.props.name, block.props.addr);
+  const startEmpty = useStartEmpty(block.props.name, block.props.addr, block.props.coord);
   const openEdit = () =>
     open({
       blockId: block.id,
