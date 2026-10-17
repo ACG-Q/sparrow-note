@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
+import { BlockIcon, PencilIcon } from "../../icons";
+import { ActionBtn, BlockCard } from "../_shared/BlockShell";
 import { moodConfig, type MoodProps } from "./config";
 import MoodDisplay from "./Display";
 import MoodEdit from "./Edit";
@@ -18,12 +20,21 @@ function MoodRender({ block, editor, contentRef }: MoodProps) {
   }, [open]);
 
   return (
-    <div ref={rootRef} style={{ position: "relative" }}>
-      <MoodDisplay
-        emoji={block.props.emoji}
-        ref={contentRef}
-        onTogglePicker={() => setOpen((v) => !v)}
-      />
+    <div ref={rootRef} style={{ position: "relative", width: "100%" }}>
+      <BlockCard
+        chip={<BlockIcon type="mood" />}
+        active={open}
+        onClick={() => {
+          if (!open) setOpen(true);
+        }}
+        actions={<ActionBtn icon={<PencilIcon />} label="编辑心情" onClick={() => setOpen(true)} />}
+      >
+        <MoodDisplay
+          emoji={block.props.emoji}
+          ref={contentRef}
+          onTogglePicker={() => setOpen((v) => !v)}
+        />
+      </BlockCard>
       {open && (
         <MoodEdit
           emoji={block.props.emoji}

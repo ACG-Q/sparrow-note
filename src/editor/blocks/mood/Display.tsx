@@ -9,7 +9,7 @@ export default forwardRef<
   }
 >(function MoodDisplay({ emoji, onTogglePicker }, contentRef) {
   return (
-    <div className={s.root}>
+    <div className={s.row}>
       <button
         type="button"
         className={s.emoji}
