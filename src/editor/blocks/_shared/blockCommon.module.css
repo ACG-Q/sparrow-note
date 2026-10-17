@@ -5,6 +5,7 @@
   padding: 12px 14px;
   margin: 4px 0;
   display: flex;
+  flex: 1;
   align-items: flex-start;
   gap: 10px;
 }
