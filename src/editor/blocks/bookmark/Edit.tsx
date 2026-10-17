@@ -1,6 +1,6 @@
 import s from "./styles.module.css";
-import shared from "../_shared/blockCommon.module.css";
-import { stopMouseDown } from "../_shared/BlockShell";
+import { LinkIcon } from "../../icons";
+import { PanelSection, PanelInput, SwitchRow } from "../_shared/panelKit";
 import { type BookmarkBlockT, type BookmarkEditor } from "./config";
 
 export default function BookmarkEdit({
@@ -15,20 +15,31 @@ export default function BookmarkEdit({
   };
   const valid = /^https?:\/\//i.test(block.props.url);
   return (
-    <div className={shared.form}>
-      <input className={shared.input} placeholder="链接标题" value={block.props.title} onChange={set("title")} onMouseDown={stopMouseDown} />
-      <input className={shared.input} placeholder="https://…" value={block.props.url} onChange={set("url")} onMouseDown={stopMouseDown} />
-      {valid && (
-        <a
-          className={s.open}
-          href={block.props.url}
-          target="_blank"
-          rel="noreferrer noopener"
-          onMouseDown={stopMouseDown}
-        >
-          打开链接
-        </a>
-      )}
-    </div>
+    <>
+      <PanelSection label="标题">
+        <PanelInput placeholder="链接标题" value={block.props.title} onChange={set("title")} />
+      </PanelSection>
+      <PanelSection label="网址">
+        <PanelInput placeholder="https://…" value={block.props.url} onChange={set("url")} />
+      </PanelSection>
+      <SwitchRow
+        title="新标签页打开"
+        desc="关闭时将在当前页内跳转"
+        checked={block.props.newTab}
+        onChange={(v) => editor.updateBlock(block, { props: { newTab: v } })}
+      />
+      <PanelSection label="预览">
+        <div className={s.preview}>
+          <span className={s.title}>{block.props.title || "未命名链接"}</span>
+          {block.props.url && <span className={s.url}>{block.props.url}</span>}
+          {valid && (
+            <span className={s.openRow}>
+              <LinkIcon />
+              在浏览器中打开
+            </span>
+          )}
+        </div>
+      </PanelSection>
+    </>
   );
 }

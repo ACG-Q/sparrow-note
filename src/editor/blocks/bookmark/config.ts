@@ -7,6 +7,7 @@ export const bookmarkConfig = {
     ...defaultProps,
     title: { default: "" },
     url: { default: "" },
+    newTab: { default: true },
   },
   content: "none",
 } as const;
