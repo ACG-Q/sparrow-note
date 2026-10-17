@@ -1,4 +1,5 @@
 import s from "./styles.module.css";
+import shared from "../_shared/blockCommon.module.css";
 import { EditBar, stopMouseDown } from "../_shared/BlockShell";
 import { parseItems, type ChecklistBlockT, type ChecklistEditor } from "./config";
 
@@ -6,17 +7,19 @@ export default function ChecklistEdit({
   block,
   editor,
   onDone,
+  onCancel,
 }: {
   block: ChecklistBlockT;
   editor: ChecklistEditor;
   onDone: () => void;
+  onCancel: () => void;
 }) {
   const items = parseItems(block.props.items);
   const save = (next: typeof items) => {
     editor.updateBlock(block, { props: { items: JSON.stringify(next) } });
   };
   return (
-    <div className={s.editRoot} contentEditable={false}>
+    <div className={shared.form} contentEditable={false}>
       {items.length === 0 && <div className={s.empty}>空清单，点击下方添加</div>}
       {items.map((it, i) => (
         <div className={s.row} key={i}>
@@ -54,7 +57,7 @@ export default function ChecklistEdit({
       >
         ＋ 添加一项
       </button>
-      <EditBar onDone={onDone} />
+      <EditBar onDone={onDone} onCancel={onCancel} />
     </div>
   );
 }

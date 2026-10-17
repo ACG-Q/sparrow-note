@@ -1,14 +1,3 @@
-.root,
-.editRoot {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin: 4px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 .empty {
   color: var(--fg-muted);
   font-size: 13px;
