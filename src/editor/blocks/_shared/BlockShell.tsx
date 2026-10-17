@@ -10,33 +10,6 @@ export function stopMouseDown(e: React.MouseEvent): void {
   e.stopPropagation();
 }
 
-export function DisplayWrap({
-  onEdit,
-  className,
-  children,
-}: {
-  onEdit: () => void;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div
-      className={className ? `${s.display} ${className}` : s.display}
-      onClick={onEdit}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") onEdit();
-      }}
-    >
-      {children}
-      <span className={s.editHint} contentEditable={false}>
-        点击编辑
-      </span>
-    </div>
-  );
-}
-
 export function BlockCard({
   chip,
   chipClassName,

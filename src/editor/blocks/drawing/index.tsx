@@ -27,7 +27,7 @@ function DrawingRender({ block, editor }: DrawingProps) {
 
   if (!block.props.data) {
     return (
-      <BlockCard chip={<BlockIcon type="drawing" />} active>
+      <BlockCard chip={<BlockIcon type="drawing" />} active onClick={openEdit}>
         <span className={shared.empty}>正在打开画板…</span>
       </BlockCard>
     );

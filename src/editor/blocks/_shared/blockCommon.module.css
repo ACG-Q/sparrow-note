@@ -194,27 +194,3 @@
   gap: 8px;
   align-items: center;
 }
-
-.display {
-  position: relative;
-  cursor: pointer;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin: 4px 0;
-}
-
-.display:hover .editHint {
-  opacity: 1;
-}
-
-.editHint {
-  position: absolute;
-  top: 4px;
-  right: 8px;
-  font-size: 11px;
-  color: var(--fg-muted);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.12s;
-}
