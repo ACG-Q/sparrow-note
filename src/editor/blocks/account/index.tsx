@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
-import { BlockIcon, PencilIcon } from "../../icons";
+import { PencilIcon } from "../../icons";
 import { useBlockEdit } from "../_shared/BlockEditContext";
 import { ActionBtn, BlockCard, useStartEmpty } from "../_shared/BlockShell";
+import s from "./styles.module.css";
 import { accountConfig, type AccountProps } from "./config";
 import AccountDisplay from "./Display";
 
@@ -27,7 +28,8 @@ function AccountRender({ block }: AccountProps) {
 
   return (
     <BlockCard
-      chip={<BlockIcon type="account" />}
+      chip={<span>{(block.props.site || "?").slice(0, 1).toUpperCase()}</span>}
+      chipClassName={s.chipLogo}
       active={pending?.blockId === block.id}
       onClick={openEdit}
       actions={<ActionBtn icon={<PencilIcon />} label="编辑账号" onClick={openEdit} />}
