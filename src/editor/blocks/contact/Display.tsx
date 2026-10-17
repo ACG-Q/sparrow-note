@@ -9,12 +9,9 @@ export default function ContactDisplay({ block }: { block: ContactBlockT }) {
   }
   const sub = [phone, company, title].filter(Boolean).join(" · ");
   return (
-    <div className={s.row}>
-      <span className={s.avatar}>{(name || "?").slice(0, 1)}</span>
-      <div className={s.main}>
-        <span className={s.name}>{name || "未命名联系人"}</span>
-        {sub && <span className={s.sub}>{sub}</span>}
-      </div>
+    <div className={s.main}>
+      <span className={s.name}>{name || "未命名联系人"}</span>
+      {sub && <span className={s.sub}>{sub}</span>}
     </div>
   );
 }
