@@ -1,62 +1,43 @@
-import { useEffect, useRef, useState } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
-import { blobToDataURL } from "../../../lib/media";
-import { voiceConfig, type VoiceProps, type VoiceEditor } from "./config";
+import { BlockIcon, MicIcon, TrashIcon } from "../../icons";
+import { useBlockEdit } from "../_shared/BlockEditContext";
+import { ActionBtn, BlockCard } from "../_shared/BlockShell";
+import { voiceConfig, type VoiceProps } from "./config";
 import VoiceDisplay from "./Display";
-import VoiceEdit from "./Edit";
 
 function VoiceRender({ block, editor }: VoiceProps) {
-  const [recording, setRecording] = useState(false);
-  const [secs, setSecs] = useState(0);
-  const recRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<number>(0);
-  const editorRef = useRef<VoiceEditor>(editor);
-  editorRef.current = editor;
+  const { pending, open } = useBlockEdit();
+  const openRecorder = () =>
+    open({
+      blockId: block.id,
+      container: "modal",
+      type: "voice",
+      label: "语音",
+      iconType: "voice",
+    });
 
-  useEffect(
-    () => () => {
-      window.clearInterval(timerRef.current);
-      recRef.current?.stream.getTracks().forEach((t) => t.stop());
-    },
-    [],
+  return (
+    <BlockCard
+      chip={<BlockIcon type="voice" />}
+      active={pending?.blockId === block.id}
+      onClick={openRecorder}
+      actions={
+        <>
+          <ActionBtn icon={<MicIcon />} label="录音" onClick={openRecorder} />
+          {block.props.url && (
+            <ActionBtn
+              icon={<TrashIcon />}
+              label="删除录音"
+              danger
+              onClick={() => editor.updateBlock(block, { props: { url: "" } })}
+            />
+          )}
+        </>
+      }
+    >
+      <VoiceDisplay block={block} />
+    </BlockCard>
   );
-
-  const start = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const rec = new MediaRecorder(stream);
-      chunksRef.current = [];
-      rec.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-      rec.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" });
-        blobToDataURL(blob).then((url) =>
-          editorRef.current.updateBlock(block, { props: { url } }),
-        );
-      };
-      rec.start();
-      recRef.current = rec;
-      setSecs(0);
-      setRecording(true);
-      timerRef.current = window.setInterval(() => setSecs((s) => s + 1), 1000);
-    } catch {
-      setRecording(false);
-    }
-  };
-
-  const stop = () => {
-    window.clearInterval(timerRef.current);
-    recRef.current?.stop();
-    setRecording(false);
-  };
-
-  if (recording) {
-    return <VoiceEdit secs={secs} onStop={stop} />;
-  }
-  return <VoiceDisplay block={block} editor={editor} onRecord={start} />;
 }
 
 export const VoiceBlock = createReactBlockSpec(voiceConfig, {

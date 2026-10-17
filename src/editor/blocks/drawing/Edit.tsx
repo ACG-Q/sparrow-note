@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import shared from "../_shared/blockCommon.module.css";
+import { stopMouseDown } from "../_shared/BlockShell";
 import s from "./styles.module.css";
 import { COLORS, HEIGHT, WIDTH, type DrawingBlockT, type DrawingEditor } from "./config";
 
@@ -6,10 +8,12 @@ export default function DrawingEdit({
   block,
   editor,
   onDone,
+  onCancel,
 }: {
   block: DrawingBlockT;
   editor: DrawingEditor;
   onDone: () => void;
+  onCancel: () => void;
 }) {
   const [color, setColor] = useState(COLORS[0]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -72,7 +76,7 @@ export default function DrawingEdit({
   };
 
   return (
-    <div className={s.root} contentEditable={false}>
+    <div className={shared.form} contentEditable={false}>
       <div className={s.toolbar}>
         {COLORS.map((c) => (
           <button
@@ -94,10 +98,7 @@ export default function DrawingEdit({
             ctx?.clearRect(0, 0, WIDTH, HEIGHT);
           }}
         >
-          清空
-        </button>
-        <button type="button" className={s.save} onMouseDown={(e) => e.preventDefault()} onClick={save}>
-          完成
+          清空画布
         </button>
       </div>
       <canvas
@@ -110,6 +111,14 @@ export default function DrawingEdit({
         onPointerUp={end}
         onPointerLeave={end}
       />
+      <div className={shared.formRow}>
+        <button type="button" className={s.btn} onMouseDown={stopMouseDown} onClick={onCancel}>
+          取消
+        </button>
+        <button type="button" className={shared.done} onMouseDown={stopMouseDown} onClick={save}>
+          完成
+        </button>
+      </div>
     </div>
   );
 }

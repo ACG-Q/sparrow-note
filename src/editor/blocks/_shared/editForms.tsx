@@ -12,6 +12,10 @@ import BookmarkEdit from "../bookmark/Edit";
 import type { BookmarkBlockT, BookmarkEditor } from "../bookmark/config";
 import BankcardEdit from "../bankcard/Edit";
 import type { BankcardBlockT, BankcardEditor } from "../bankcard/config";
+import DrawingEdit from "../drawing/Edit";
+import type { DrawingBlockT, DrawingEditor } from "../drawing/config";
+import VoiceRecorder from "../voice/VoiceRecorder";
+import type { VoiceBlockT, VoiceEditor } from "../voice/config";
 
 export type PanelFormProps = {
   block: AppBlock;
@@ -55,6 +59,22 @@ export const EDIT_FORMS: Record<string, (p: PanelFormProps) => ReactElement> = {
     <BankcardEdit
       block={block as unknown as BankcardBlockT}
       editor={editor as unknown as BankcardEditor}
+    />
+  ),
+  drawing: ({ block, editor, onDone, onCancel }) => (
+    <DrawingEdit
+      block={block as unknown as DrawingBlockT}
+      editor={editor as unknown as DrawingEditor}
+      onDone={onDone}
+      onCancel={onCancel}
+    />
+  ),
+  voice: ({ block, editor, onDone, onCancel }) => (
+    <VoiceRecorder
+      block={block as unknown as VoiceBlockT}
+      editor={editor as unknown as VoiceEditor}
+      onDone={onDone}
+      onCancel={onCancel}
     />
   ),
 };
