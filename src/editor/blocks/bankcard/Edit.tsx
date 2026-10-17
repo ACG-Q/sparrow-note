@@ -1,6 +1,21 @@
-import shared from "../_shared/blockCommon.module.css";
-import { stopMouseDown } from "../_shared/BlockShell";
-import type { BankcardBlockT, BankcardEditor } from "./config";
+import s from "./styles.module.css";
+import { PanelSection, PanelInput, SegCtl } from "../_shared/panelKit";
+import {
+  THEME_CLASS,
+  groupNo,
+  maskNo,
+  type BankTheme,
+  type BankcardBlockT,
+  type BankcardEditor,
+} from "./config";
+
+const KIND_OPTIONS = [
+  { value: "储蓄卡", label: "储蓄卡" },
+  { value: "信用卡", label: "信用卡" },
+  { value: "其他", label: "其他" },
+];
+
+const THEMES: BankTheme[] = ["blue", "purple", "teal", "rose"];
 
 export default function BankcardEdit({
   block,
@@ -9,24 +24,64 @@ export default function BankcardEdit({
   block: BankcardBlockT;
   editor: BankcardEditor;
 }) {
-  const set = (key: "bank" | "no" | "holder") => (e: React.ChangeEvent<HTMLInputElement>) => {
-    editor.updateBlock(block, { props: { [key]: e.target.value } });
-  };
+  const p = block.props;
+  const theme = p.theme as BankTheme;
   return (
-    <div className={shared.form}>
-      <input className={shared.input} placeholder="银行名称" value={block.props.bank} onChange={set("bank")} onMouseDown={stopMouseDown} />
-      <select
-        className={shared.input}
-        value={block.props.kind}
-        onChange={(e) => editor.updateBlock(block, { props: { kind: e.target.value as typeof block.props.kind } })}
-        onMouseDown={stopMouseDown}
-      >
-        <option value="储蓄卡">储蓄卡</option>
-        <option value="信用卡">信用卡</option>
-        <option value="其他">其他</option>
-      </select>
-      <input className={shared.input} placeholder="卡号" value={block.props.no} onChange={set("no")} onMouseDown={stopMouseDown} />
-      <input className={shared.input} placeholder="持卡人" value={block.props.holder} onChange={set("holder")} onMouseDown={stopMouseDown} />
-    </div>
+    <>
+      <PanelSection label="预览">
+        <div className={`${s.mini} ${THEME_CLASS[theme]}`}>
+          <div className={s.mcTop}>
+            <span className={s.mcBank}>{p.bank || "银行名称"}</span>
+            <span className={s.mcKind}>{p.kind}</span>
+          </div>
+          <div className={s.mcNo}>{p.no ? maskNo(p.no) : "•••• •••• •••• ••••"}</div>
+          <div className={s.mcHolder}>{p.holder || "持卡人"}</div>
+        </div>
+      </PanelSection>
+      <PanelSection label="银行">
+        <PanelInput
+          placeholder="银行名称"
+          value={p.bank}
+          onChange={(e) => editor.updateBlock(block, { props: { bank: e.target.value } })}
+        />
+      </PanelSection>
+      <PanelSection label="卡种">
+        <SegCtl
+          options={KIND_OPTIONS}
+          value={p.kind}
+          onChange={(v) => editor.updateBlock(block, { props: { kind: v as typeof p.kind } })}
+        />
+      </PanelSection>
+      <PanelSection label="卡号">
+        <PanelInput
+          placeholder="6222 0000 0000 0000"
+          value={groupNo(p.no)}
+          style={{ fontFamily: "Consolas, ui-monospace, monospace", letterSpacing: "1px" }}
+          onChange={(e) => editor.updateBlock(block, { props: { no: e.target.value.replace(/\D/g, "") } })}
+        />
+      </PanelSection>
+      <PanelSection label="持卡人">
+        <PanelInput
+          placeholder="持卡人姓名"
+          value={p.holder}
+          onChange={(e) => editor.updateBlock(block, { props: { holder: e.target.value } })}
+        />
+      </PanelSection>
+      <PanelSection label="卡面配色">
+        <div className={s.swatches}>
+          {THEMES.map((t) => (
+            <button
+              key={t}
+              type="button"
+              className={t === theme ? `${s.swatch} ${s[`swatch_${t}`]} ${s.swatchOn}` : `${s.swatch} ${s[`swatch_${t}`]}`}
+              aria-label={`配色 ${t}`}
+              contentEditable={false}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.updateBlock(block, { props: { theme: t } })}
+            />
+          ))}
+        </div>
+      </PanelSection>
+    </>
   );
 }

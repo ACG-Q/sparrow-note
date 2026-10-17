@@ -4,7 +4,7 @@ import { PencilIcon, TrashIcon } from "../../icons";
 import { useBlockEdit } from "../_shared/BlockEditContext";
 import { ActionBtn, useStartEmpty } from "../_shared/BlockShell";
 import s from "./styles.module.css";
-import { bankcardConfig, type BankcardProps } from "./config";
+import { THEME_CLASS, bankcardConfig, type BankcardProps } from "./config";
 import BankcardDisplay from "./Display";
 
 function BankcardRender({ block, editor }: BankcardProps) {
@@ -28,7 +28,9 @@ function BankcardRender({ block, editor }: BankcardProps) {
 
   return (
     <div
-      className={pending?.blockId === block.id ? `${s.root} ${s.active}` : s.root}
+      className={[s.root, THEME_CLASS[block.props.theme as keyof typeof THEME_CLASS], pending?.blockId === block.id ? s.active : ""]
+        .filter(Boolean)
+        .join(" ")}
       onClick={openEdit}
       role="button"
       tabIndex={0}
