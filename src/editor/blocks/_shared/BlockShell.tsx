@@ -39,6 +39,7 @@ export function DisplayWrap({
 
 export function BlockCard({
   chip,
+  chipClassName,
   actions,
   active,
   onClick,
@@ -46,6 +47,7 @@ export function BlockCard({
   children,
 }: {
   chip?: ReactNode;
+  chipClassName?: string;
   actions?: ReactNode;
   active?: boolean;
   onClick?: () => void;
@@ -64,7 +66,10 @@ export function BlockCard({
       }}
     >
       {chip && (
-        <span className={s.chip} contentEditable={false}>
+        <span
+          className={chipClassName ? `${s.chip} ${chipClassName}` : s.chip}
+          contentEditable={false}
+        >
           {chip}
         </span>
       )}

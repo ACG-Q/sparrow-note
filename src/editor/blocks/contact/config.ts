@@ -8,6 +8,11 @@ export const contactConfig = {
     name: { default: "" },
     phone: { default: "" },
     relation: { default: "" },
+    email: { default: "" },
+    company: { default: "" },
+    title: { default: "" },
+    birthday: { default: "" },
+    note: { default: "" },
   },
   content: "none",
 } as const;

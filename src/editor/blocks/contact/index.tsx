@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
-import { BlockIcon, PencilIcon } from "../../icons";
+import { PencilIcon } from "../../icons";
 import { useBlockEdit } from "../_shared/BlockEditContext";
 import { ActionBtn, BlockCard, useStartEmpty } from "../_shared/BlockShell";
+import s from "./styles.module.css";
 import { contactConfig, type ContactProps } from "./config";
 import ContactDisplay from "./Display";
 
@@ -27,7 +28,8 @@ function ContactRender({ block }: ContactProps) {
 
   return (
     <BlockCard
-      chip={<BlockIcon type="contact" />}
+      chip={<span>{(block.props.name || "?").slice(0, 1)}</span>}
+      chipClassName={s.chipAvatar}
       active={pending?.blockId === block.id}
       onClick={openEdit}
       actions={<ActionBtn icon={<PencilIcon />} label="编辑联系人" onClick={openEdit} />}

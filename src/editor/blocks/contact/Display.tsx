@@ -3,15 +3,18 @@ import shared from "../_shared/blockCommon.module.css";
 import type { ContactBlockT } from "./config";
 
 export default function ContactDisplay({ block }: { block: ContactBlockT }) {
-  const { name, phone, relation } = block.props;
-  if (!name && !phone && !relation) {
-    return <span className={shared.empty}>点击填写联系人</span>;
+  const { name, phone, company, title } = block.props;
+  if (!name && !phone && !company && !title) {
+    return <span className={shared.empty}>点击填写姓名</span>;
   }
+  const sub = [phone, company, title].filter(Boolean).join(" · ");
   return (
     <div className={s.row}>
-      {name && <span className={s.name}>{name}</span>}
-      {phone && <span className={s.phone}>{phone}</span>}
-      {relation && <span className={s.relation}>{relation}</span>}
+      <span className={s.avatar}>{(name || "?").slice(0, 1)}</span>
+      <div className={s.main}>
+        <span className={s.name}>{name || "未命名联系人"}</span>
+        {sub && <span className={s.sub}>{sub}</span>}
+      </div>
     </div>
   );
 }
