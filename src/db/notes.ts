@@ -1,4 +1,6 @@
 import type { AppBlock } from "../editor/schema";
+import { idbBackend } from "./idb";
+import { sqliteBackend } from "./sqlite";
 
 export interface NoteDoc {
   id: string;
@@ -9,55 +11,33 @@ export interface NoteDoc {
   blocks: AppBlock[];
 }
 
-const DB_NAME = "sparrow-note";
-const DB_VERSION = 1;
-const STORE = "notes";
-
-let dbPromise: Promise<IDBDatabase> | null = null;
-
-function openDb(): Promise<IDBDatabase> {
-  if (!dbPromise) {
-    dbPromise = new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, DB_VERSION);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains(STORE)) {
-          db.createObjectStore(STORE, { keyPath: "id" });
-        }
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-  return dbPromise;
+export interface NotesBackend {
+  listNotes(): Promise<NoteDoc[]>;
+  putNote(note: NoteDoc): Promise<void>;
+  deleteNote(id: string): Promise<void>;
+  clearAllNotes(): Promise<void>;
 }
 
-async function withStore<T>(
-  mode: IDBTransactionMode,
-  fn: (store: IDBObjectStore) => IDBRequest<T>,
-): Promise<T> {
-  const db = await openDb();
-  return new Promise<T>((resolve, reject) => {
-    const tx = db.transaction(STORE, mode);
-    const req = fn(tx.objectStore(STORE));
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
+export function isTauri(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+export function resolveBackend(isTauriEnv: boolean): NotesBackend {
+  return isTauriEnv ? sqliteBackend : idbBackend;
 }
 
 export async function listNotes(): Promise<NoteDoc[]> {
-  const notes = await withStore<NoteDoc[]>("readonly", (s) => s.getAll());
-  return notes.sort((a, b) => b.updatedAt - a.updatedAt);
+  return resolveBackend(isTauri()).listNotes();
 }
 
 export async function putNote(note: NoteDoc): Promise<void> {
-  await withStore("readwrite", (s) => s.put(note));
+  return resolveBackend(isTauri()).putNote(note);
 }
 
 export async function deleteNote(id: string): Promise<void> {
-  await withStore("readwrite", (s) => s.delete(id));
+  return resolveBackend(isTauri()).deleteNote(id);
 }
 
 export async function clearAllNotes(): Promise<void> {
-  await withStore("readwrite", (s) => s.clear());
+  return resolveBackend(isTauri()).clearAllNotes();
 }
