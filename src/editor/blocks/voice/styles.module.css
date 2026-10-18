@@ -61,3 +61,23 @@
 .cancelBtn:hover {
   background: var(--ed-menu-active);
 }
+
+.importBtn {
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--fg-muted);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.importBtn:hover {
+  color: var(--fg);
+  border-color: var(--accent);
+}
+
+.err {
+  color: #e03e3e;
+  font-size: 12.5px;
+}

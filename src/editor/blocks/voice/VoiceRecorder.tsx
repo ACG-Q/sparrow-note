@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { blobToDataURL } from "../../../lib/media";
+import { blobToDataURL, checkAudioFile, fileToDataURL } from "../../../lib/media";
 import shared from "../_shared/blockCommon.module.css";
 import { stopMouseDown } from "../_shared/BlockShell";
 import s from "./styles.module.css";
@@ -18,10 +18,12 @@ export default function VoiceRecorder({
 }) {
   const [recording, setRecording] = useState(false);
   const [secs, setSecs] = useState(0);
+  const [err, setErr] = useState("");
   const recRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number>(0);
   const discardRef = useRef(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(
     () => () => {
@@ -73,6 +75,18 @@ export default function VoiceRecorder({
     onCancel();
   };
 
+  const pickFile = async (file: File) => {
+    const check = checkAudioFile(file);
+    if (!check.ok) {
+      setErr(check.error);
+      return;
+    }
+    setErr("");
+    const url = await fileToDataURL(file);
+    editor.updateBlock(block, { props: { url } });
+    onDone();
+  };
+
   return (
     <div className={shared.form} contentEditable={false}>
       <div className={s.recHead}>
@@ -81,6 +95,7 @@ export default function VoiceRecorder({
         </span>
         {recording && <span className={s.recDot} />}
       </div>
+      {err && <div className={s.err}>{err}</div>}
       <div className={shared.formRow}>
         <button
           type="button"
@@ -95,6 +110,22 @@ export default function VoiceRecorder({
             取消
           </button>
         )}
+        {!recording && (
+          <button type="button" className={s.importBtn} onMouseDown={stopMouseDown} onClick={() => fileRef.current?.click()}>
+            导入音频
+          </button>
+        )}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="audio/*"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (f) void pickFile(f);
+          }}
+        />
         {!recording && (
           <button type="button" className={shared.done} onMouseDown={stopMouseDown} onClick={onDone}>
             完成
