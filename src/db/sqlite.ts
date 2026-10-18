@@ -11,7 +11,7 @@ interface NoteRow {
   date: string;
   created_at: number;
   updated_at: number;
-  blocks_json: string;
+  blocks: string;
 }
 
 let dbPromise: Promise<SqlDb> | null = null;
@@ -20,7 +20,7 @@ function getDb(): Promise<SqlDb> {
   if (!dbPromise) {
     dbPromise = (async () => {
       const { default: Database } = await import("@tauri-apps/plugin-sql");
-      return (await Database.load("sqlite:sparrow.db")) as SqlDb;
+      return (await Database.load("sqlite:notes.db")) as SqlDb;
     })();
   }
   return dbPromise;
@@ -33,7 +33,7 @@ function rowToNote(row: NoteRow): NoteDoc {
     date: row.date,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    blocks: JSON.parse(row.blocks_json) as NoteDoc["blocks"],
+    blocks: JSON.parse(row.blocks) as NoteDoc["blocks"],
   };
 }
 
@@ -41,7 +41,7 @@ export const sqliteBackend: NotesBackend = {
   async listNotes(): Promise<NoteDoc[]> {
     const db = await getDb();
     const rows = await db.select<NoteRow[]>(
-      "SELECT id, title, date, created_at, updated_at, blocks_json FROM notes ORDER BY updated_at DESC",
+      "SELECT id, title, date, created_at, updated_at, blocks FROM notes ORDER BY updated_at DESC",
     );
     return rows.map(rowToNote);
   },
@@ -49,14 +49,14 @@ export const sqliteBackend: NotesBackend = {
   async putNote(note: NoteDoc): Promise<void> {
     const db = await getDb();
     await db.execute(
-      `INSERT INTO notes (id, title, date, created_at, updated_at, blocks_json)
+      `INSERT INTO notes (id, title, date, created_at, updated_at, blocks)
        VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT(id) DO UPDATE SET
          title = excluded.title,
          date = excluded.date,
          created_at = excluded.created_at,
          updated_at = excluded.updated_at,
-         blocks_json = excluded.blocks_json`,
+         blocks = excluded.blocks`,
       [
         note.id,
         note.title,
