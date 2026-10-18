@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import type { NoteDoc, NotesBackend } from "./notes";
 
 interface SqlDb {
@@ -20,7 +21,8 @@ function getDb(): Promise<SqlDb> {
   if (!dbPromise) {
     dbPromise = (async () => {
       const { default: Database } = await import("@tauri-apps/plugin-sql");
-      return (await Database.load("sqlite:notes.db")) as SqlDb;
+      const url = await invoke<string>("get_sqlite_url");
+      return (await Database.load(url)) as SqlDb;
     })();
   }
   return dbPromise;

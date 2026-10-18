@@ -5,6 +5,7 @@ dist/
 dev-server.log
 src-tauri/target/
 src-tauri/gen/
+webview-data/
 .DS_Store
 .superpowers/
 .agents/

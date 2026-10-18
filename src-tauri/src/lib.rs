@@ -14,13 +14,31 @@ pub fn notes_migrations() -> Vec<tauri_plugin_sql::Migration> {
   }]
 }
 
+pub fn db_conn_url() -> Result<String, Box<dyn std::error::Error>> {
+  // 本机安全软件（HIPS/反勒索驱动）按镜像路径拦截 exe 写 %APPDATA% 与 %TEMP%（只放行 exe 自身目录），
+  // 故数据库放在 exe 旁边（与 webview-data 布局一致），不用 app_config_dir。
+  let exe_dir = std::env::current_exe()?
+    .parent()
+    .ok_or("executable has no parent directory")?
+    .to_path_buf();
+  Ok(format!("sqlite:{}", exe_dir.join("notes.db").display()))
+}
+
+#[tauri::command]
+fn get_sqlite_url() -> Result<String, String> {
+  db_conn_url().map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  let builder = tauri::Builder::default().plugin(
-    tauri_plugin_sql::Builder::default()
-      .add_migrations("sqlite:notes.db", notes_migrations())
-      .build(),
-  );
+  let db_url = db_conn_url().expect("resolve sqlite url");
+  let builder = tauri::Builder::default()
+    .plugin(
+      tauri_plugin_sql::Builder::default()
+        .add_migrations(&db_url, notes_migrations())
+        .build(),
+    )
+    .invoke_handler(tauri::generate_handler![get_sqlite_url]);
 
   #[cfg(debug_assertions)]
   let builder = builder.plugin(
@@ -75,7 +93,18 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-  use super::notes_migrations;
+  use super::{db_conn_url, notes_migrations};
+
+  #[test]
+  fn db_conn_url_points_to_exe_sibling_notes_db() {
+    let url = db_conn_url().unwrap();
+    assert!(url.starts_with("sqlite:"));
+    assert!(url.ends_with("notes.db"));
+    let exe = std::env::current_exe().unwrap();
+    let exe_dir = exe.parent().unwrap();
+    let db_path = std::path::Path::new(&url["sqlite:".len()..]);
+    assert!(db_path.starts_with(exe_dir));
+  }
 
   #[tokio::test]
   async fn migration_builds_schema_and_crud_roundtrip() {
