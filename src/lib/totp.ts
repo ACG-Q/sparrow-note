@@ -7,7 +7,7 @@ export interface TotpParams {
 
 const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
-export function base32Decode(input: string): Uint8Array {
+export function base32Decode(input: string): Uint8Array<ArrayBuffer> {
   const clean = input
     .toUpperCase()
     .replace(/[\s=]/g, "")

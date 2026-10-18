@@ -10,6 +10,7 @@ export const accountConfig = {
     user: { default: "" },
     pass: { default: "" },
     note: { default: "" },
+    totp: { default: "" },
   },
   content: "none",
 } as const;

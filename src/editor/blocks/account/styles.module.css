@@ -68,3 +68,38 @@
   color: var(--fg-muted);
   flex: none;
 }
+
+.totpRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.totpCode {
+  font-family: Consolas, ui-monospace, monospace;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+
+.totpBar {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--ed-block-hover);
+  overflow: hidden;
+}
+
+.totpBar i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.9s linear;
+}
+
+.totpCopy {
+  font-size: 11.5px;
+  color: var(--fg-muted);
+}
