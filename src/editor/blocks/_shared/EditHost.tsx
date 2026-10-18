@@ -104,15 +104,7 @@ export function EditHost() {
   if (pending.container === "side") {
     const foot = (
       <div className={s.foot} contentEditable={false}>
-        <span className={s.footHint}>Esc 取消</span>
-        <button
-          type="button"
-          className={s.btnCancel}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={close}
-        >
-          取消
-        </button>
+        <span className={s.footHint}>Esc 关闭</span>
         <button
           type="button"
           className={s.btnDone}
@@ -139,13 +131,16 @@ export function EditHost() {
       );
     }
     return (
-      <div className={s.side} contentEditable={false}>
-        {head}
-        <div className={s.body}>
-          <Form {...formProps} />
+      <>
+        <div className={s.backdrop} onClick={close} contentEditable={false} />
+        <div className={s.side} contentEditable={false}>
+          {head}
+          <div className={s.body}>
+            <Form {...formProps} />
+          </div>
+          {foot}
         </div>
-        {foot}
-      </div>
+      </>
     );
   }
 
