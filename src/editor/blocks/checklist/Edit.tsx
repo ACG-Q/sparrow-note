@@ -7,12 +7,10 @@ export default function ChecklistEdit({
   block,
   editor,
   onDone,
-  onCancel,
 }: {
   block: ChecklistBlockT;
   editor: ChecklistEditor;
   onDone: () => void;
-  onCancel: () => void;
 }) {
   const items = parseItems(block.props.items);
   const save = (next: typeof items) => {
@@ -57,7 +55,7 @@ export default function ChecklistEdit({
       >
         ＋ 添加一项
       </button>
-      <EditBar onDone={onDone} onCancel={onCancel} />
+      <EditBar onDone={onDone} />
     </div>
   );
 }

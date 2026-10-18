@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
 import { BlockIcon, PencilIcon } from "../../icons";
 import { ActionBtn, BlockCard } from "../_shared/BlockShell";
+import shared from "../_shared/blockCommon.module.css";
 import { moodConfig, type MoodProps } from "./config";
 import MoodDisplay from "./Display";
 import MoodEdit from "./Edit";
@@ -20,10 +21,15 @@ function MoodRender({ block, editor, contentRef }: MoodProps) {
   }, [open]);
 
   return (
-    <div ref={rootRef} style={{ position: "relative", width: "100%" }}>
+    <div
+      ref={rootRef}
+      className={open ? shared.editingLayer : undefined}
+      style={{ position: "relative", width: "100%" }}
+    >
       <BlockCard
         chip={<BlockIcon type="mood" />}
         active={open}
+        className={open ? shared.editingRaised : undefined}
         onClick={() => {
           if (!open) setOpen(true);
         }}
@@ -35,6 +41,9 @@ function MoodRender({ block, editor, contentRef }: MoodProps) {
           onTogglePicker={() => setOpen((v) => !v)}
         />
       </BlockCard>
+      {open && (
+        <div className={shared.inlineMask} onClick={() => setOpen(false)} contentEditable={false} />
+      )}
       {open && (
         <MoodEdit
           emoji={block.props.emoji}

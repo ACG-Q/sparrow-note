@@ -88,14 +88,8 @@ export function ActionBtn({
   );
 }
 
-export function EditBar({
-  onDone,
-  onCancel,
-  typeLabel,
-  iconType,
-}: {
+export function EditBar({ onDone, typeLabel, iconType }: {
   onDone: () => void;
-  onCancel?: () => void;
   typeLabel?: string;
   iconType?: string;
 }) {
@@ -106,16 +100,6 @@ export function EditBar({
           <BlockIcon type={iconType ?? ""} />
           {typeLabel}
         </span>
-      )}
-      {onCancel && (
-        <button
-          type="button"
-          className={s.cancel}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={onCancel}
-        >
-          取消
-        </button>
       )}
       <button
         type="button"

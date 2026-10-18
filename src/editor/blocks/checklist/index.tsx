@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
 import { BlockIcon, PencilIcon } from "../../icons";
 import { ActionBtn, BlockCard } from "../_shared/BlockShell";
+import shared from "../_shared/blockCommon.module.css";
 import { checklistConfig, parseItems, type ChecklistProps } from "./config";
 import ChecklistDisplay from "./Display";
 import ChecklistEdit from "./Edit";
@@ -27,24 +28,27 @@ function ChecklistRender({ block, editor }: ChecklistProps) {
   }, [editing]);
 
   return (
-    <div ref={rootRef} style={{ width: "100%" }}>
+    <div
+      ref={rootRef}
+      className={editing ? shared.editingLayer : undefined}
+      style={{ width: "100%" }}
+    >
       <BlockCard
         chip={<BlockIcon type="checklist" />}
         active={editing}
+        className={editing ? shared.editingRaised : undefined}
         onClick={() => setEditing(true)}
         actions={<ActionBtn icon={<PencilIcon />} label="编辑清单" onClick={() => setEditing(true)} />}
       >
         {editing ? (
-          <ChecklistEdit
-            block={block}
-            editor={editor}
-            onDone={() => setEditing(false)}
-            onCancel={() => setEditing(false)}
-          />
+          <ChecklistEdit block={block} editor={editor} onDone={() => setEditing(false)} />
         ) : (
           <ChecklistDisplay block={block} editor={editor} />
         )}
       </BlockCard>
+      {editing && (
+        <div className={shared.inlineMask} onClick={() => setEditing(false)} contentEditable={false} />
+      )}
     </div>
   );
 }

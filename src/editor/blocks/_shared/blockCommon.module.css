@@ -119,21 +119,6 @@
   flex: none;
 }
 
-.cancel {
-  border: none;
-  background: transparent;
-  color: var(--fg-muted);
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 12.5px;
-  cursor: pointer;
-}
-
-.cancel:hover {
-  background: var(--ed-menu-active);
-  color: var(--fg);
-}
-
 .done {
   border: 1px solid var(--accent);
   background: var(--accent);
@@ -192,4 +177,20 @@
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.inlineMask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 15, 0.45);
+  z-index: 1;
+}
+
+.editingLayer {
+  position: relative;
+  z-index: 40;
+}
+
+.editingRaised {
+  z-index: 2;
 }
