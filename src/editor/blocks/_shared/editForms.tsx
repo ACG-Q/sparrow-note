@@ -61,12 +61,11 @@ export const EDIT_FORMS: Record<string, (p: PanelFormProps) => ReactElement> = {
       editor={editor as unknown as BankcardEditor}
     />
   ),
-  drawing: ({ block, editor, onDone, onCancel }) => (
+  drawing: ({ block, editor, onDone }) => (
     <DrawingEdit
       block={block as unknown as DrawingBlockT}
       editor={editor as unknown as DrawingEditor}
       onDone={onDone}
-      onCancel={onCancel}
     />
   ),
   voice: ({ block, editor, onDone, onCancel }) => (

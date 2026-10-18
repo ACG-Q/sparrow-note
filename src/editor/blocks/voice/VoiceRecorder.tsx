@@ -90,9 +90,11 @@ export default function VoiceRecorder({
         >
           {recording ? "停止" : block.props.url ? "重新录制" : "开始录音"}
         </button>
-        <button type="button" className={s.cancelBtn} onMouseDown={stopMouseDown} onClick={cancel}>
-          取消
-        </button>
+        {recording && (
+          <button type="button" className={s.cancelBtn} onMouseDown={stopMouseDown} onClick={cancel}>
+            取消
+          </button>
+        )}
         {!recording && (
           <button type="button" className={shared.done} onMouseDown={stopMouseDown} onClick={onDone}>
             完成

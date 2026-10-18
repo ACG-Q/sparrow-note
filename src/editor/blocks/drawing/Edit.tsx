@@ -8,18 +8,18 @@ export default function DrawingEdit({
   block,
   editor,
   onDone,
-  onCancel,
 }: {
   block: DrawingBlockT;
   editor: DrawingEditor;
   onDone: () => void;
-  onCancel: () => void;
 }) {
   const [color, setColor] = useState(COLORS[0]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
+  const lastSavedRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (block.props.data === lastSavedRef.current) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -65,13 +65,21 @@ export default function DrawingEdit({
   };
 
   const end = () => {
+    if (!drawingRef.current) return;
     drawingRef.current = false;
+    persist();
+  };
+
+  const persist = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const url = canvas.toDataURL("image/png");
+    lastSavedRef.current = url;
+    editor.updateBlock(block, { props: { data: url } });
   };
 
   const save = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    editor.updateBlock(block, { props: { data: canvas.toDataURL("image/png") } });
+    persist();
     onDone();
   };
 
@@ -96,6 +104,7 @@ export default function DrawingEdit({
           onClick={() => {
             const ctx = canvasRef.current?.getContext("2d");
             ctx?.clearRect(0, 0, WIDTH, HEIGHT);
+            persist();
           }}
         >
           清空画布
@@ -112,9 +121,6 @@ export default function DrawingEdit({
         onPointerLeave={end}
       />
       <div className={shared.formRow}>
-        <button type="button" className={s.btn} onMouseDown={stopMouseDown} onClick={onCancel}>
-          取消
-        </button>
         <button type="button" className={shared.done} onMouseDown={stopMouseDown} onClick={save}>
           完成
         </button>
