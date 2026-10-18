@@ -13,6 +13,7 @@ import {
 import { genPassword, passStrength, type AccountBlockT, type AccountEditor } from "./config";
 import { normalizeTotpInput } from "../../../lib/totp";
 import { useTotp } from "../../../lib/useTotp";
+import QrScanDialog from "../../../components/QrScanDialog";
 
 export default function AccountEdit({
   block,
@@ -29,6 +30,7 @@ export default function AccountEdit({
   const [totpErr, setTotpErr] = useState("");
   const totpState = useTotp(p.totp);
   const [copiedTotp, copyTotp] = useCopy();
+  const [scanOpen, setScanOpen] = useState(false);
 
   const addTotp = () => {
     const norm = normalizeTotpInput(totpInput);
@@ -152,6 +154,9 @@ export default function AccountEdit({
           </Rows>
         )}
         {totpErr && <div className={s.err}>{totpErr}</div>}
+        {!(p.totp && totpState) && (
+          <GhostLink onClick={() => setScanOpen(true)}>扫码添加</GhostLink>
+        )}
       </PanelSection>
       <PanelSection label="备注" hint="可选">
         <PanelTextarea
@@ -160,6 +165,17 @@ export default function AccountEdit({
           onChange={set("note")}
         />
       </PanelSection>
+      <QrScanDialog
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        onScan={(uri) => {
+          const norm = normalizeTotpInput(uri);
+          if (norm) {
+            editor.updateBlock(block, { props: { totp: norm } });
+            setScanOpen(false);
+          }
+        }}
+      />
     </>
   );
 }
