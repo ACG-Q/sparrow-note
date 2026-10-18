@@ -112,7 +112,7 @@ mod tests {
       .execute(&pool)
       .await
       .unwrap();
-    let updated: String = sqlx::query_as("SELECT title FROM notes WHERE id = $1")
+    let updated: String = sqlx::query_scalar("SELECT title FROM notes WHERE id = $1")
       .bind("n1")
       .fetch_one(&pool)
       .await
@@ -124,7 +124,7 @@ mod tests {
       .execute(&pool)
       .await
       .unwrap();
-    let count: i64 = sqlx::query_as("SELECT COUNT(*) FROM notes")
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM notes")
       .fetch_one(&pool)
       .await
       .unwrap();
