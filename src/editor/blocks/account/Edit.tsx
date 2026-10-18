@@ -11,6 +11,8 @@ import {
   useCopy,
 } from "../_shared/panelKit";
 import { genPassword, passStrength, type AccountBlockT, type AccountEditor } from "./config";
+import { normalizeTotpInput } from "../../../lib/totp";
+import { useTotp } from "../../../lib/useTotp";
 
 export default function AccountEdit({
   block,
@@ -23,6 +25,21 @@ export default function AccountEdit({
   const [showPass, setShowPass] = useState(false);
   const [copiedUser, copyUser] = useCopy();
   const [copiedPass, copyPass] = useCopy();
+  const [totpInput, setTotpInput] = useState("");
+  const [totpErr, setTotpErr] = useState("");
+  const totpState = useTotp(p.totp);
+  const [copiedTotp, copyTotp] = useCopy();
+
+  const addTotp = () => {
+    const norm = normalizeTotpInput(totpInput);
+    if (!norm) {
+      setTotpErr("密钥格式不正确");
+      return;
+    }
+    setTotpErr("");
+    setTotpInput("");
+    editor.updateBlock(block, { props: { totp: norm } });
+  };
   const set = (key: "site" | "url" | "user" | "pass" | "note") => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -91,6 +108,50 @@ export default function AccountEdit({
         <GhostLink onClick={() => editor.updateBlock(block, { props: { pass: genPassword() } })}>
           生成随机密码
         </GhostLink>
+      </PanelSection>
+      <PanelSection label="两步验证" hint={p.totp ? "" : "可选"}>
+        {p.totp && totpState ? (
+          <Rows>
+            <Row label="动态码">
+              <span
+                style={{
+                  fontFamily: "Consolas, ui-monospace, monospace",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  letterSpacing: 1,
+                  color: "var(--accent)",
+                }}
+              >
+                {totpState.code.replace(/(.{3})/g, "$1 ").trim()}
+              </span>
+              <MiniBtn onClick={() => copyTotp(totpState.code)}>
+                {copiedTotp ? "已复制" : "复制"}
+              </MiniBtn>
+              <MiniBtn
+                onClick={() => {
+                  editor.updateBlock(block, { props: { totp: "" } });
+                }}
+              >
+                移除
+              </MiniBtn>
+            </Row>
+          </Rows>
+        ) : (
+          <Rows>
+            <Row label="密钥">
+              <RowInput
+                placeholder="粘贴 base32 密钥或 otpauth:// 链接"
+                value={totpInput}
+                onChange={(e) => {
+                  setTotpInput(e.target.value);
+                  if (totpErr) setTotpErr("");
+                }}
+              />
+              <MiniBtn onClick={addTotp}>添加</MiniBtn>
+            </Row>
+          </Rows>
+        )}
+        {totpErr && <div className={s.err}>{totpErr}</div>}
       </PanelSection>
       <PanelSection label="备注" hint="可选">
         <PanelTextarea
