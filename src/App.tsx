@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { deleteNote, listNotes, putNote, type NoteDoc } from "./db/notes";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { deleteNote, isTauri, listNotes, putNote, type NoteDoc } from "./db/notes";
 import { NoteEditor } from "./editor/NoteEditor";
 import { SummaryView } from "./SummaryView";
 import { ProfileView } from "./ProfileView";
@@ -119,6 +120,10 @@ export default function App() {
         setMenuOpen(false);
         setPaletteOpen(false);
         setDrawerOpen(false);
+      }
+      if (isTauri() && (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "i"))) {
+        e.preventDefault();
+        void getCurrentWindow().openDevtools();
       }
     };
     window.addEventListener("keydown", onKey);
