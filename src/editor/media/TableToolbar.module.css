@@ -1,0 +1,268 @@
+.bar {
+  position: fixed;
+  z-index: 210;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 2px 4px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: 0 14px 30px -26px rgba(25, 23, 19, 0.5);
+  border-radius: 0;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .03em;
+  cursor: pointer;
+  border-radius: 0;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  border-color: var(--rule);
+  color: var(--seal);
+}
+
+.btnOn {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+
+.sizeBtn {
+  gap: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gridIcon {
+  display: grid;
+  grid-template-columns: repeat(3, 3px);
+  grid-template-rows: repeat(3, 3px);
+  gap: 1.5px;
+}
+
+.gridIcon i {
+  background: currentColor;
+}
+
+.sep {
+  width: 1px;
+  height: 14px;
+  margin: 0 4px;
+  background: var(--rule);
+}
+
+.spacer {
+  flex: 1;
+  min-width: 10px;
+}
+
+/* ---------- 尺寸面板 ---------- */
+.pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 5;
+  padding: 9px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: 0 18px 36px -28px rgba(25, 23, 19, 0.6);
+}
+
+.grid {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 9px;
+}
+
+.gridCell {
+  width: 18px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.gridHot {
+  background: var(--paper-3);
+  border-color: var(--rule-strong);
+}
+
+.sizeRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted-2);
+}
+
+.sizeInput {
+  width: 40px;
+  height: 24px;
+  padding: 0 5px;
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  text-align: center;
+  border-radius: 0;
+}
+
+.sizeInput:focus {
+  outline: none;
+  border-color: var(--seal);
+}
+
+.times {
+  color: var(--muted-2);
+}
+
+.okBtn {
+  margin-left: auto;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--seal);
+  background: var(--seal);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .04em;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.okBtn:hover {
+  background: color-mix(in srgb, var(--seal) 88%, var(--ink));
+}
+
+/* ---------- 更多菜单 ---------- */
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 5;
+  min-width: 138px;
+  padding: 4px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: 0 18px 36px -28px rgba(25, 23, 19, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.item {
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .02em;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.item:hover {
+  background: var(--paper-3);
+  color: var(--ink);
+}
+
+.menuSep {
+  height: 1px;
+  margin: 4px 2px;
+  background: var(--rule-soft);
+}
+
+.danger:hover {
+  color: var(--seal);
+}
+
+/* 触屏：点击区放大 */
+@media (hover: none) {
+  .btn {
+    height: 32px;
+    min-width: 34px;
+    font-size: 11.5px;
+    padding: 0 9px;
+  }
+
+  .item {
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+}
+
+/* 上方空间不足时弹层朝下，够的时候朝上——总之别压住表格内容 */
+.popUp {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+.menuUp {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+/* 翻到上方时限制高度，避免整块菜单跑到视口外面 */
+.menuUp {
+  max-height: min(60vh, 380px);
+  overflow-y: auto;
+}
+
+.popUp {
+  max-height: min(60vh, 380px);
+  overflow-y: auto;
+}
+
+/* 被拒绝的操作给一句提示，2.2 秒后自动消失 */
+.hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .02em;
+  color: var(--seal);
+  white-space: nowrap;
+  margin-right: 6px;
+}
+
+/* 作用范围预览层：盖在表格上方画框，pointer-events 关掉不挡操作 */
+.pvLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.pvOn,
+.pvTarget {
+  position: fixed;
+  display: block;
+  pointer-events: none;
+}
+
+.pvOn {
+  background: color-mix(in srgb, var(--seal) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--seal) 45%, transparent);
+}
+
+.pvTarget {
+  background: color-mix(in srgb, var(--seal) 4%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--seal) 24%, transparent);
+  outline: 1px dashed color-mix(in srgb, var(--seal) 38%, transparent);
+  outline-offset: -2px;
+}

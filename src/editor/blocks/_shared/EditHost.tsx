@@ -41,7 +41,7 @@ function PanelHead({
   } else if (type === "anniversary") {
     sub = "正计时 · 倒计时 · 纪念日";
   } else if (type === "location") {
-    sub = "定位获取 · 手动兜底";
+    sub = "搜地点 · 定位 · 手填";
   } else if (type === "bookmark") {
     sub = "保存网页链接";
   } else if (type === "bankcard") {

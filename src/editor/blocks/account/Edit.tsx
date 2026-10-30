@@ -91,17 +91,14 @@ export default function AccountEdit({
           <div className={s.strength}>
             <div className={s.strengthBar}>
               {[1, 2, 3, 4].map((i) => (
-                <i
-                  key={i}
-                  className={
-                    i <= strength.level + 1
-                      ? `${s.seg} ${s[`segF${Math.min(strength.level + 1, 3)}`]}`
-                      : s.seg
-                  }
-                />
+                <i key={i} className={i <= strength.level + 1 ? `${s.seg} ${s.segOn}` : s.seg} />
               ))}
             </div>
-            <span className={s.strengthText}>
+            <span
+              className={
+                strength.level <= 1 ? `${s.strengthText} ${s.strengthWeak}` : s.strengthText
+              }
+            >
               {strength.label}
               {strength.level === 3 ? " · 建议保留" : ""}
             </span>

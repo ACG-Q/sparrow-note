@@ -1,13 +1,12 @@
-import { useEffect } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
-import { PencilIcon } from "../../icons";
+import { PencilIcon, TrashIcon } from "../../icons";
 import { useBlockEdit } from "../_shared/BlockEditContext";
+import { useAutoEditOnEmpty } from "../_shared/useAutoEditOnEmpty";
 import { ActionBtn, BlockCard, useStartEmpty } from "../_shared/BlockShell";
-import s from "./styles.module.css";
 import { contactConfig, type ContactProps } from "./config";
 import ContactDisplay from "./Display";
 
-function ContactRender({ block }: ContactProps) {
+function ContactRender({ block, editor }: ContactProps) {
   const { pending, open, close } = useBlockEdit();
   const startEmpty = useStartEmpty(block.props.name, block.props.phone, block.props.relation);
   const openEdit = () =>
@@ -19,20 +18,23 @@ function ContactRender({ block }: ContactProps) {
       iconType: "contact",
     });
 
-  useEffect(() => {
-    if (!startEmpty) return;
-    openEdit();
-    return close;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useAutoEditOnEmpty(startEmpty, openEdit, close);
 
   return (
     <BlockCard
-      chip={<span>{(block.props.name || "?").slice(0, 1)}</span>}
-      chipClassName={s.chipAvatar}
       active={pending?.blockId === block.id}
       onClick={openEdit}
-      actions={<ActionBtn icon={<PencilIcon />} label="编辑联系人" onClick={openEdit} />}
+      actions={
+          <>
+            <ActionBtn icon={<PencilIcon />} label="编辑联系人" onClick={openEdit} />
+            <ActionBtn
+              icon={<TrashIcon />}
+              label="删除联系人"
+              danger
+              onClick={() => editor.removeBlocks([block])}
+            />
+          </>
+        }
     >
       <ContactDisplay block={block} />
     </BlockCard>

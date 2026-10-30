@@ -1,0 +1,88 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.play {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.play:hover {
+  color: var(--seal);
+  border-color: var(--seal);
+}
+
+.track {
+  flex: 1;
+  min-width: 0;
+  height: 3px;
+  background: var(--paper-3);
+  cursor: pointer;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: var(--seal);
+}
+
+.time {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: var(--muted-2);
+}
+
+.wrap audio {
+  display: none;
+}
+
+/* ---------- 静态波形 ---------- */
+.wave {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.bar {
+  flex: 1;
+  min-width: 2px;
+  max-width: 5px;
+  background: var(--rule);
+  transition: height .1s linear, background .12s linear;
+}
+
+.barOn {
+  background: var(--seal);
+}

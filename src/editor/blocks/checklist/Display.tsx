@@ -20,13 +20,21 @@ export default function ChecklistDisplay({
     <>
       {items.map((it, i) => (
         <div className={s.row} key={i}>
-          <input
-            type="checkbox"
-            checked={it.d}
-            onChange={() => save(items.map((x, j) => (j === i ? { ...x, d: !x.d } : x)))}
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={it.d}
+            aria-label={it.t || "清单项"}
+            className={it.d ? `${s.box} ${s.boxOn}` : s.box}
             contentEditable={false}
-            onClick={(e) => e.stopPropagation()}
-          />
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              save(items.map((x, j) => (j === i ? { ...x, d: !x.d } : x)));
+            }}
+          >
+            {it.d ? "✓" : ""}
+          </button>
           <span className={it.d ? `${s.text} ${s.done}` : s.text}>{it.t || "（空项）"}</span>
         </div>
       ))}

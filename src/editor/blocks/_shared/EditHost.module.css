@@ -6,7 +6,7 @@
   width: 320px;
   background: var(--bg);
   border-left: 1px solid var(--border);
-  border-radius: 14px 0 0 14px;
+  border-radius: 0;
   box-shadow: -8px 0 32px rgba(15, 15, 15, 0.08);
   z-index: 40;
   display: flex;
@@ -44,7 +44,7 @@ html[data-theme="dark"] .side {
 .headIcon {
   width: 38px;
   height: 38px;
-  border-radius: 10px;
+  border-radius: 0;
   flex: none;
   display: grid;
   place-items: center;
@@ -60,12 +60,13 @@ html[data-theme="dark"] .side {
 .headAvatar {
   width: 38px;
   height: 38px;
-  border-radius: 50%;
+  border-radius: 0;
   flex: none;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, var(--accent), #7c3aed);
-  color: #fff;
+  background: var(--seal-fill);
+  color: #f7f1e6;
+  font-family: var(--serif);
   font-size: 15px;
   font-weight: 600;
 }
@@ -73,12 +74,13 @@ html[data-theme="dark"] .side {
 .headLogo {
   width: 38px;
   height: 38px;
-  border-radius: 10px;
+  border-radius: 0;
   flex: none;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #24292f, #57606a);
-  color: #fff;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--serif);
   font-size: 17px;
   font-weight: 700;
 }
@@ -112,7 +114,7 @@ html[data-theme="dark"] .side {
   color: var(--fg-muted);
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   display: grid;
   place-items: center;
@@ -142,7 +144,7 @@ html[data-theme="dark"] .side {
   padding: 12px 18px;
   border-top: 1px solid var(--border);
   background: var(--bg);
-  border-radius: 0 0 0 14px;
+  border-radius: 0;
 }
 
 .footHint {
@@ -154,13 +156,14 @@ html[data-theme="dark"] .side {
 .btnDone {
   border: none;
   background: var(--accent);
-  color: #fff;
+  color: #f7f1e6;
+  font-family: var(--serif);
   font-size: 13px;
+  letter-spacing: 0.06em;
   padding: 7px 18px;
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   font-weight: 600;
-  font-family: inherit;
 }
 
 .btnDone:hover {
@@ -181,7 +184,8 @@ html[data-theme="dark"] .side {
   bottom: 0;
   max-height: 76vh;
   background: var(--bg);
-  border-radius: 16px 16px 0 0;
+  border-radius: 0;
+  border-top: 1px solid var(--border);
   z-index: 40;
   display: flex;
   flex-direction: column;
@@ -200,7 +204,7 @@ html[data-theme="dark"] .side {
 .handle {
   width: 36px;
   height: 4px;
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--ed-pop-border);
   margin: 8px auto 0;
   flex: none;
@@ -219,7 +223,7 @@ html[data-theme="dark"] .side {
 .modal {
   background: var(--bg);
   border: 1px solid var(--ed-pop-border);
-  border-radius: 12px;
+  border-radius: 0;
   min-width: 420px;
   max-width: 560px;
   width: 100%;

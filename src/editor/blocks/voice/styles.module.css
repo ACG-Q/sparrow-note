@@ -8,7 +8,7 @@
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--fg);
-  border-radius: 6px;
+  border-radius: 0;
   padding: 5px 12px;
   font-size: 13px;
   cursor: pointer;
@@ -32,8 +32,8 @@
 .recDot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
-  background: #e03e3e;
+  border-radius: 0;
+  background: var(--seal);
   animation: recPulse 1s ease-in-out infinite;
 }
 
@@ -52,7 +52,7 @@
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--fg);
-  border-radius: 6px;
+  border-radius: 0;
   padding: 4px 14px;
   font-size: 12.5px;
   cursor: pointer;
@@ -66,7 +66,7 @@
   border: 1px dashed var(--border);
   background: transparent;
   color: var(--fg-muted);
-  border-radius: 6px;
+  border-radius: 0;
   padding: 5px 12px;
   font-size: 13px;
   cursor: pointer;
@@ -78,6 +78,147 @@
 }
 
 .err {
-  color: #e03e3e;
+  color: var(--seal);
   font-size: 12.5px;
+}
+
+/* ---------- 录音面板：波形 + 大录制键 ---------- */
+.recorder {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recStage {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+}
+
+.recKey {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--seal);
+  background: transparent;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background .15s ease;
+}
+
+.recKey:hover {
+  background: color-mix(in srgb, var(--seal) 10%, transparent);
+}
+
+.recKeyOn {
+  background: var(--seal);
+}
+
+.recDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--seal);
+}
+
+.recKeyOn .recSquare {
+  width: 14px;
+  height: 14px;
+  background: var(--paper);
+}
+
+.recSquare {
+  width: 14px;
+  height: 14px;
+  background: var(--seal);
+}
+
+.recInfo {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 82px;
+}
+
+.recTime {
+  font-family: var(--mono);
+  font-size: 15px;
+  letter-spacing: .08em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.recState {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .06em;
+  color: var(--muted-2);
+}
+
+.wave {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.waveBar {
+  flex: 1;
+  min-width: 2px;
+  max-width: 4px;
+  height: 3%;
+  background: var(--rule);
+  transition: height .12s ease-out;
+}
+
+.waveBarOn {
+  background: var(--seal);
+}
+
+.recErr {
+  padding: 8px 12px;
+  border-left: 2px solid var(--seal);
+  background: var(--paper-2);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--seal);
+}
+
+.recPreview {
+  padding: 10px 12px;
+  border: 1px solid var(--rule-soft);
+  background: var(--paper-2);
+}
+
+.recActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recGhost {
+  padding: 6px 12px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--muted-ink);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .05em;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.recGhost:hover {
+  border-color: var(--seal);
+  color: var(--seal);
 }

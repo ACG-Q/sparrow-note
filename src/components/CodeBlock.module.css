@@ -1,0 +1,99 @@
+.root {
+  margin: 22px 0;
+  border: 1px solid var(--rule);
+  background: var(--paper-3);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.lang {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--seal);
+}
+
+.count {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .04em;
+  color: var(--muted-2);
+}
+
+.copy {
+  margin-left: auto;
+  padding: 2px 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted-2);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .04em;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.copy:hover {
+  border-color: var(--rule);
+  color: var(--seal);
+}
+
+.body {
+  overflow: auto;
+  transition: max-height .18s ease;
+}
+
+.body[data-folded] {
+  position: relative;
+  overflow: hidden;
+}
+
+.body[data-folded]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 48px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--paper-3));
+}
+
+.body :global(pre.shiki) {
+  margin: 0;
+  padding: 12px 14px;
+  background: transparent !important;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.55;
+  letter-spacing: 0;
+  overflow-x: auto;
+}
+
+.body :global(pre.shiki code) {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.more {
+  display: block;
+  width: 100%;
+  padding: 7px 12px;
+  border: 0;
+  border-top: 1px solid var(--rule-soft);
+  background: transparent;
+  color: var(--muted-ink);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .06em;
+  cursor: pointer;
+}
+
+.more:hover {
+  color: var(--seal);
+}

@@ -1,0 +1,93 @@
+/* 兜底页：沿用纸面语言，不抢眼但得看得懂 */
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: var(--paper);
+}
+
+.card {
+  width: 100%;
+  max-width: 520px;
+  padding: 26px 28px 24px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-top: 2px solid var(--seal);
+}
+
+.kicker {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  color: var(--seal);
+}
+
+.title {
+  margin: 8px 0 0;
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+}
+
+.lead {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--muted-ink);
+}
+
+.detail {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  max-height: 160px;
+  overflow: auto;
+  border: 1px solid var(--rule-soft);
+  background: var(--paper-2);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.primary,
+.ghost {
+  padding: 8px 14px;
+  border: 1px solid var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.primary {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.primary:hover {
+  background: var(--seal);
+  border-color: var(--seal);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--ink-2);
+  border-color: var(--rule);
+}
+
+.ghost:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}

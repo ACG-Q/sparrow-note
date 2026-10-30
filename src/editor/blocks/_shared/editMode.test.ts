@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EDIT_CONTAINER_BY_TYPE, MOBILE_MAX_WIDTH, editContainerOf } from "./editMode";
 
 const ALL_TYPES = [
+  "sparrowTable",
   "account",
   "anniversary",
   "bankcard",

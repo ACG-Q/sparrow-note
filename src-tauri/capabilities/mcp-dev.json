@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "mcp-dev",
+  "description": "MCP 调试桥只在桌面存在；安卓构建里没有这个插件，所以单独放一份并限定平台。",
+  "windows": [
+    "main"
+  ],
+  "platforms": [
+    "windows",
+    "macOS",
+    "linux"
+  ],
+  "permissions": [
+    "mcp-bridge:default"
+  ]
+}

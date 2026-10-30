@@ -17,6 +17,7 @@ export function BlockCard({
   active,
   onClick,
   className,
+  alwaysActions,
   children,
 }: {
   chip?: ReactNode;
@@ -25,6 +26,8 @@ export function BlockCard({
   active?: boolean;
   onClick?: () => void;
   className?: string;
+  /** 空块（还没录音/还没画）时操作钮常显，否则新块根本找不到入口 */
+  alwaysActions?: boolean;
   children: ReactNode;
 }) {
   const cls = [s.card, active ? s.cardActive : "", className ?? ""].filter(Boolean).join(" ");
@@ -48,7 +51,10 @@ export function BlockCard({
       )}
       <div className={s.cardBody}>{children}</div>
       {actions && (
-        <span className={s.actions} contentEditable={false}>
+        <span
+          className={alwaysActions ? `${s.actions} ${s.actionsOn}` : s.actions}
+          contentEditable={false}
+        >
           {actions}
         </span>
       )}

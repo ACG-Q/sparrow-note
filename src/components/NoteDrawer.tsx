@@ -1,8 +1,8 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import type { NoteDoc } from "../db/notes";
 import { heatmap, last7Days, moodCountsThisMonth, streaks, summarize } from "../lib/stats";
-import { themeLabel, type ThemePref } from "../lib/theme";
-import { CloseIcon, GearIcon, MoonIcon } from "../ui/icons";
+import { moodChar } from "../lib/mood";
+import { themeLabel, resolveDark, type ThemePref } from "../lib/theme";
 import { Heatmap } from "./Heatmap";
 import s from "./NoteDrawer.module.css";
 
@@ -15,6 +15,7 @@ export function NoteDrawer({
   onCreate,
   onOpenSettings,
   onPickDate,
+  onClearFilter,
 }: {
   open: boolean;
   notes: NoteDoc[];
@@ -24,6 +25,7 @@ export function NoteDrawer({
   onCreate: () => void;
   onOpenSettings: () => void;
   onPickDate: (date: string) => void;
+  onClearFilter?: () => void;
 }) {
   const summary = useMemo(() => summarize(notes), [notes]);
   const streak = useMemo(() => streaks(notes), [notes]);
@@ -52,7 +54,10 @@ export function NoteDrawer({
         aria-hidden={!open}
       >
         <div className={s.head}>
-          <span className={s.logo}>麻雀记</span>
+          <div className={s.brand}>
+            <span className={s.seal} aria-hidden="true">雀</span>
+            <span className={s.logo}>麻雀记</span>
+          </div>
           <div className={s.actions}>
             <button
               className={s.iconBtn}
@@ -60,13 +65,13 @@ export function NoteDrawer({
               aria-label="切换主题"
               title={`切换主题（当前：${themeLabel(themePref)}）`}
             >
-              <MoonIcon />
+              {resolveDark(themePref) ? "日间" : "夜间"}
             </button>
             <button className={s.iconBtn} onClick={onOpenSettings} aria-label="打开设置">
-              <GearIcon />
+              设置
             </button>
             <button className={s.iconBtn} onClick={onClose} aria-label="关闭">
-              <CloseIcon />
+              ×
             </button>
           </div>
         </div>
@@ -104,7 +109,21 @@ export function NoteDrawer({
           <div className={s.card}>
             <div className={s.cardTitle}>贡献热力图</div>
             <Heatmap cells={cells} onPickDate={onPickDate} />
-            <div className={s.heatLegend}>近 16 周 · 点击格子查看当天列表</div>
+            <div className={s.heatLegend}>
+              近 16 周 · 点击格子查看当天列表
+              {onClearFilter && (
+                <button
+                  type="button"
+                  className={s.clearFilter}
+                  onClick={() => {
+                    onClearFilter();
+                    onClose();
+                  }}
+                >
+                  显示全部
+                </button>
+              )}
+            </div>
           </div>
 
           <div className={s.card}>
@@ -131,7 +150,9 @@ export function NoteDrawer({
             ) : (
               moods.map((m) => (
                 <div key={m.emoji} className={s.moodRow}>
-                  <span>{m.emoji}</span>
+                  <span className={s.moodStamp} aria-hidden="true">
+                    {moodChar(m.emoji)}
+                  </span>
                   <div className={s.moodTrack}>
                     <div
                       className={s.moodBar}

@@ -1,15 +1,17 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "enables the default permissions",
+  "description": "默认窗口权限：不含 devtools（开发期用 devtools 能力由 debug 构建单独放开）",
   "windows": [
     "main"
   ],
   "permissions": [
     "core:default",
-    "core:webview:allow-internal-toggle-devtools",
-    "mcp-bridge:default",
+    "notification:default",
     "sql:default",
-    "sql:allow-execute"
+    "sql:allow-execute",
+    "geolocation:allow-check-permissions",
+    "geolocation:allow-request-permissions",
+    "geolocation:allow-get-current-position"
   ]
 }

@@ -1,16 +1,43 @@
 import s from "./styles.module.css";
-import { THEME_CLASS, maskNo, type BankcardBlockT } from "./config";
+import { groupNo, maskNo, type BankcardBlockT } from "./config";
 
-export default function BankcardDisplay({ block }: { block: BankcardBlockT }) {
-  const { bank, no, holder, kind, theme } = block.props;
+export default function BankcardDisplay({
+  block,
+  revealed,
+  onToggleReveal,
+}: {
+  block: BankcardBlockT;
+  revealed: boolean;
+  onToggleReveal: () => void;
+}) {
+  const { bank, no, holder, kind } = block.props;
+  const digits = no.replace(/\D/g, "");
   return (
-    <div className={THEME_CLASS[theme as keyof typeof THEME_CLASS]}>
+    <>
       <div className={s.top}>
         <span className={s.bank}>{bank || "点击填写银行"}</span>
         <span className={s.kind}>{kind}</span>
       </div>
-      <div className={s.no}>{no ? maskNo(no) : "•••• •••• •••• ••••"}</div>
-      <div className={s.holder}>{holder || "点击填写持卡人"}</div>
-    </div>
+      <div className={s.no}>
+        {digits ? (revealed ? groupNo(digits) : maskNo(digits)) : "•••• •••• •••• ••••"}
+      </div>
+      <div className={s.bottom}>
+        <span className={s.holder}>{holder || "点击填写持卡人"}</span>
+        {digits ? (
+          <button
+            type="button"
+            className={s.reveal}
+            contentEditable={false}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleReveal();
+            }}
+          >
+            {revealed ? "隐藏" : "查看"}
+          </button>
+        ) : null}
+      </div>
+    </>
   );
 }

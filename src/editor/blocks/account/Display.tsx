@@ -13,11 +13,9 @@ export default function AccountDisplay({ block }: { block: AccountBlockT }) {
   }
   return (
     <>
-      <div className={s.top}>
-        <span className={s.site}>
-          {site || "未命名账号"}
-          {user && <span className={s.user}> · {user}</span>}
-        </span>
+      <div className={shared.bcBody}>
+        <span className={shared.bcTitle}>{site || "未命名账号"}</span>
+        {user && <span className={shared.bcMeta}>{user}</span>}
       </div>
       {pass && <div className={s.pass}>密码：••••••••••</div>}
       {totpState && (

@@ -1,0 +1,82 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  max-width: 400px;
+  border-top: 1px solid var(--rule-soft);
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.wd {
+  padding: 6px 0 4px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--muted-2);
+}
+
+.cell {
+  position: relative;
+  aspect-ratio: 1 / 1.06;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-bottom: 1px solid var(--rule-soft);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted-2);
+  cursor: pointer;
+  transition: color 0.16s ease, background 0.16s ease;
+}
+
+.cell:active {
+  background: var(--hover);
+}
+
+.blank {
+  aspect-ratio: 1 / 1.06;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+/* 有记录：数字加深 + 底部一枚印章点；选中：整格实底 */
+.has {
+  color: var(--ink);
+  background: transparent;
+}
+
+.has::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 9px);
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  background: var(--seal);
+}
+
+.today {
+  color: var(--seal);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--seal);
+  background: transparent;
+}
+
+.selected {
+  color: var(--paper);
+  background: var(--seal-fill);
+  box-shadow: none;
+}
+
+.selected::after {
+  display: none;
+}
+
+@media (max-width: 340px) {
+  .cell,
+  .blank {
+    aspect-ratio: 1 / 1.15;
+  }
+}

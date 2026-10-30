@@ -1,0 +1,108 @@
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px 56px;
+  background: color-mix(in srgb, var(--ink) 92%, transparent);
+  animation: fade .14s ease-out;
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0;
+}
+
+.media {
+  display: block;
+  max-width: 92vw;
+  max-height: 82vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  background: transparent;
+}
+
+.caption {
+  max-width: 70ch;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.7;
+  letter-spacing: .03em;
+  text-align: center;
+  color: color-mix(in srgb, var(--paper) 78%, transparent);
+}
+
+.close {
+  position: fixed;
+  top: 18px;
+  right: 20px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--paper) 35%, transparent);
+  background: transparent;
+  color: var(--paper);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.close:hover {
+  border-color: var(--paper);
+}
+
+@media (max-width: 640px) {
+  .scrim {
+    padding: 56px 12px 40px;
+  }
+
+  .media {
+    max-width: 100%;
+    max-height: 74vh;
+  }
+}
+
+.tools {
+  position: fixed;
+  top: 18px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tool {
+  padding: 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--paper) 35%, transparent);
+  background: transparent;
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .05em;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.tool:hover {
+  border-color: var(--paper);
+}
+
+.close {
+  position: static;
+}

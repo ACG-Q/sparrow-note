@@ -1,7 +1,7 @@
-import { useEffect } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
-import { BlockIcon, PencilIcon, TrashIcon } from "../../icons";
+import { PencilIcon, TrashIcon } from "../../icons";
 import { useBlockEdit } from "../_shared/BlockEditContext";
+import { useAutoEditOnEmpty } from "../_shared/useAutoEditOnEmpty";
 import { ActionBtn, BlockCard } from "../_shared/BlockShell";
 import shared from "../_shared/blockCommon.module.css";
 import { drawingConfig, type DrawingProps } from "./config";
@@ -18,16 +18,11 @@ function DrawingRender({ block, editor }: DrawingProps) {
       iconType: "drawing",
     });
 
-  useEffect(() => {
-    if (block.props.data) return;
-    openEdit();
-    return close;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [block.props.data]);
+  useAutoEditOnEmpty(!block.props.data, openEdit, close);
 
   if (!block.props.data) {
     return (
-      <BlockCard chip={<BlockIcon type="drawing" />} active onClick={openEdit}>
+      <BlockCard active onClick={openEdit}>
         <span className={shared.empty}>正在打开画板…</span>
       </BlockCard>
     );
@@ -35,7 +30,6 @@ function DrawingRender({ block, editor }: DrawingProps) {
 
   return (
     <BlockCard
-      chip={<BlockIcon type="drawing" />}
       active={pending?.blockId === block.id}
       onClick={openEdit}
       actions={

@@ -1,0 +1,723 @@
+.doc {
+  padding-top: 2px;
+}
+
+.title {
+  margin: 18px 0 16px;
+  font-family: var(--serif);
+  font-size: 36px;
+  line-height: 1.32;
+  letter-spacing: .03em;
+  font-weight: 700;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+/* ---------- 名目 ---------- */
+.meta {
+  margin: 0 0 26px;
+  border-top: 1px solid var(--rule-soft);
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.metaRow {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  border-top: 1px solid var(--rule-soft);
+}
+
+.metaRow:first-child {
+  border-top: 0;
+}
+
+.metaRow dt {
+  padding: 8px 0;
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: .14em;
+  color: var(--muted-2);
+}
+
+.metaRow dd {
+  margin: 0;
+  padding: 8px 0;
+  font-size: 13px;
+  letter-spacing: .03em;
+  color: var(--ink-2);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* 心情标记：印章字，不再是红底白字——红实底留给「雀」与落款 */
+.stamp {
+  flex: none;
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--seal);
+}
+
+/* ---------- 正文 ---------- */
+.body p {
+  margin: 0 0 18px;
+  font-size: var(--reader-fs, 16.5px);
+  line-height: var(--reader-lh, 1.95);
+  letter-spacing: .012em;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+/* 链接与行内代码：不然会落到浏览器默认的蓝链和等宽块 */
+.body a,
+.body a:visited {
+  color: var(--seal);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--seal) 38%, transparent);
+  text-underline-offset: 3px;
+}
+
+.body a:hover {
+  text-decoration-color: var(--seal);
+}
+
+.body :where(p, blockquote, li, td) code {
+  font-family: var(--mono);
+  font-size: .92em;
+  padding: 1px 4px;
+  background: var(--paper-3);
+  color: var(--ink-2);
+}
+
+.first::first-letter {
+  float: left;
+  margin: 5px 8px 0 0;
+  font-family: var(--serif);
+  font-size: 44px;
+  line-height: .92;
+  color: var(--seal);
+}
+
+.blank {
+  height: 8px;
+}
+
+.h2 {
+  margin: 30px 0 10px;
+  font-family: var(--serif);
+  font-size: 24px;
+  letter-spacing: .05em;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.h3 {
+  margin: 24px 0 8px;
+  font-family: var(--serif);
+  font-size: 19px;
+  letter-spacing: .05em;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.quote {
+  margin: 24px 0;
+  padding: 4px 0 4px 14px;
+  border-left: 2px solid var(--seal);
+  font-family: var(--serif);
+  font-size: calc(var(--reader-fs, 16.5px) * 1.03);
+  line-height: 1.9;
+  letter-spacing: .05em;
+  color: var(--ink);
+}
+
+/* 列表 */
+.listItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0 0 10px;
+  font-size: var(--reader-fs, 16.5px);
+  line-height: var(--reader-lh, 1.95);
+  color: var(--ink-2);
+}
+
+.bullet {
+  flex: none;
+  width: 14px;
+  color: var(--seal);
+  font-family: var(--mono);
+}
+
+.numIdx {
+  flex: none;
+  min-width: 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted-2);
+  line-height: 2.4;
+}
+
+.box {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 5px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rule-strong);
+  font-family: var(--mono);
+  font-size: 9px;
+  line-height: 1;
+  color: var(--seal);
+}
+
+.checked,
+.done {
+  color: var(--muted-ink);
+}
+
+.checked .box,
+.done .box {
+  background: var(--seal-fill);
+  border-color: var(--seal-fill);
+  color: #f7f1e6;
+}
+
+/* 子块缩进即可：画一条竖线会让嵌套列表读起来像引用块 */
+.children {
+  display: block;
+  margin-top: 6px;
+  padding-left: 14px;
+}
+
+.code {
+  margin: 18px 0;
+  padding: 12px 14px;
+  background: var(--paper-3);
+  font-family: var(--mono);
+  font-size: calc(var(--reader-fs, 16.5px) * .76);
+  line-height: 1.8;
+  color: var(--ink-2);
+  overflow-x: auto;
+}
+
+.divider {
+  margin: 26px 0;
+  border: none;
+  border-top: 1px solid var(--rule-strong);
+}
+
+/* ---------- 表格 ---------- */
+.tableWrap {
+  margin: 22px 0;
+  /* 列多/字长时不压缩，横向滚动看 */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  border-collapse: collapse;
+  /* 按内容自然撑开，至少占满一栏；超宽交给外层滚动 */
+  width: max-content;
+  min-width: 100%;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.td {
+  padding: 9px 12px;
+  max-width: 380px;
+  word-break: break-word;
+  border-bottom: 1px solid var(--rule-soft);
+  border-right: 1px solid var(--rule-soft);
+  text-align: left;
+  vertical-align: top;
+}
+
+.td:last-child {
+  border-right: none;
+}
+
+/* 首行当表头：线重一档，字用衬线 */
+.th {
+  font-family: var(--serif);
+  font-weight: 600;
+  color: var(--ink);
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+/* 图 */
+.figure {
+  margin: 24px 0;
+}
+
+.figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--paper-3);
+}
+
+.figure figcaption {
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid var(--rule-soft);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .05em;
+  color: var(--muted-2);
+}
+
+.media {
+  display: block;
+  width: 100%;
+  margin: 20px 0;
+}
+
+.audio {
+  display: block;
+  width: 100%;
+  margin: 18px 0;
+}
+
+/* 清单块 */
+.todo {
+  list-style: none;
+  margin: 4px 0 18px;
+  padding: 0;
+}
+
+.todo li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: calc(var(--reader-fs, 16.5px) * .96);
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+
+.todo .box {
+  margin-top: 4px;
+}
+
+.todo .done {
+  text-decoration: line-through;
+  text-decoration-color: var(--rule-strong);
+}
+
+/* 书签 / 账号 */
+.bookmark {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 16px 0;
+  padding: 10px 0;
+  border-top: 1px solid var(--rule-soft);
+  border-bottom: 1px solid var(--rule-soft);
+  text-decoration: none;
+}
+
+.bookmarkTitle {
+  font-family: var(--serif);
+  font-size: 15px;
+  letter-spacing: .03em;
+  color: var(--ink);
+}
+
+.bookmarkUrl {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .04em;
+  color: var(--muted-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.lineLabel {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: .14em;
+  color: var(--muted-2);
+}
+
+.reveal {
+  margin-left: 8px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .04em;
+  color: var(--seal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* 落款 */
+.end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.mine {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--seal-fill);
+  color: #f7f1e6;
+  font-family: var(--serif);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.rule {
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+.when {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .06em;
+  color: var(--muted-2);
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 28px;
+    margin: 16px 0 14px;
+  }
+
+  .body p {
+    font-size: var(--reader-fs, 16.5px);
+    line-height: var(--reader-lh, 1.95);
+  }
+
+  .metaRow {
+    grid-template-columns: 68px minmax(0, 1fr);
+  }
+}
+
+/* 可折叠列表在阅读态：默认展开，箭头只是个标记 */
+.toggleMark {
+  flex: none;
+  width: 10px;
+  color: var(--muted-2);
+  font-size: 10px;
+  line-height: 2.6;
+}
+
+/* 手绘：按原始尺寸显示，小图不要被拉大 */
+.drawingImg {
+  display: block;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  margin: 24px 0;
+}
+
+/* ---------- 图片 / 视频：对齐 + 全屏预览入口 ---------- */
+.figure[data-align="center"] img,
+.figure[data-align="center"] .media {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.figure[data-align="right"] img,
+.figure[data-align="right"] .media {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.figure[data-align="center"] figcaption {
+  text-align: center;
+}
+
+.figure[data-align="right"] figcaption {
+  text-align: right;
+}
+
+.figure img {
+  max-width: 100%;
+  width: auto;
+  cursor: zoom-in;
+}
+
+.zoom {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: 0;
+  cursor: zoom-in;
+}
+
+.zoom img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.zoom img {
+  transition: opacity .15s ease;
+}
+
+.zoom:hover img {
+  opacity: .88;
+}
+
+.figureVideo {
+  position: relative;
+}
+
+.expandBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 5px 9px;
+  border: 1px solid color-mix(in srgb, var(--paper) 45%, transparent);
+  background: color-mix(in srgb, var(--ink) 62%, transparent);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .06em;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.expandBtn:hover {
+  background: color-mix(in srgb, var(--ink) 82%, transparent);
+  border-color: var(--paper);
+}
+
+/* ---------- 文件块：预览 + 下载 ---------- */
+.fileRow {
+  display: flex;
+  align-items: stretch;
+  margin: 16px 0;
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+}
+
+.fileMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fileMain:hover {
+  background: var(--paper-3);
+}
+
+.fileIcon {
+  flex: none;
+  font-size: 15px;
+  color: var(--seal);
+  line-height: 1;
+}
+
+.fileText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.fileOpen {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .05em;
+  color: var(--seal);
+}
+
+.fileDl {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-left: 1px solid var(--rule);
+  color: var(--muted-2);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .05em;
+  text-decoration: none;
+}
+
+.fileDl:hover {
+  color: var(--seal);
+}
+
+/* 阅读态每个块的定位包裹：不引入额外间距 */
+.blockWrap {
+  display: block;
+}
+
+/* ---------- 清单进度 ---------- */
+.todoWrap {
+  margin: 20px 0;
+}
+
+.todoHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.todoCount {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .08em;
+  color: var(--seal);
+  font-variant-numeric: tabular-nums;
+}
+
+.todoBar {
+  flex: 1;
+  height: 2px;
+  background: var(--rule);
+  overflow: hidden;
+}
+
+.todoBar i {
+  display: block;
+  height: 100%;
+  background: var(--seal);
+  transition: width .2s ease;
+}
+
+.todoWrap .todo {
+  margin: 0;
+}
+
+/* ---------- 书签：打开入口 ---------- */
+.bookmark {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+}
+
+.bookmarkText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.bookmarkOpen {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .05em;
+  color: var(--seal);
+  opacity: .55;
+  transition: opacity .15s ease;
+}
+
+.bookmark:hover .bookmarkOpen {
+  opacity: 1;
+}
+
+/* ---------- 手绘：限高，点开全屏 ---------- */
+.drawingFigure {
+  margin: 22px 0;
+}
+
+.drawingFigure .zoom img {
+  width: 100%;
+  max-height: 62vh;
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+/* ---------- meta 里的拨号链接 ---------- */
+.tel {
+  margin-left: 8px;
+  padding: 1px 6px;
+  border: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .04em;
+  color: var(--seal);
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+.tel:hover {
+  border-color: var(--seal);
+}
+
+/* ---------- 手绘：底部小条 ---------- */
+.drawingBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.drawingLabel {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .08em;
+  color: var(--muted-2);
+}
+
+.drawingSave {
+  padding: 2px 8px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--muted-2);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .05em;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.drawingSave:hover {
+  border-color: var(--seal);
+  color: var(--seal);
+}

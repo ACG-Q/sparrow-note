@@ -1,7 +1,9 @@
 import { defaultProps } from "@blocknote/core";
 import type { ReactCustomBlockRenderProps } from "@blocknote/react";
+import { MOOD_EMOJIS } from "../../../lib/mood";
 
-export const EMOJIS = ["😀", "😄", "😐", "😢", "😡", "🥰", "😴", "🤯", "😎", "😭", "🤒", "🥳"];
+/** 选择表与 mood.ts 的映射共用一份，避免两处列表漂移 */
+export const EMOJIS = MOOD_EMOJIS;
 
 export const moodConfig = {
   type: "mood",

@@ -11,7 +11,7 @@
 .dialog {
   background: var(--bg);
   border: 1px solid var(--ed-pop-border);
-  border-radius: 12px;
+  border-radius: 0;
   width: min(440px, calc(100vw - 32px));
   box-shadow: var(--ed-pop-shadow);
   padding: 16px;
@@ -21,13 +21,15 @@
 }
 
 .head {
+  font-family: var(--serif);
   font-size: 15px;
   font-weight: 700;
+  letter-spacing: 0.06em;
 }
 
 .viewport {
   position: relative;
-  border-radius: 10px;
+  border-radius: 0;
   overflow: hidden;
   background: #000;
   aspect-ratio: 4 / 3;
@@ -42,8 +44,8 @@
 }
 
 .drop {
-  border: 1.5px dashed var(--border);
-  border-radius: 10px;
+  border: 1px dashed var(--rule-strong);
+  border-radius: 0;
   aspect-ratio: 4 / 3;
   display: grid;
   place-items: center;
@@ -52,7 +54,7 @@
 }
 
 .drop:hover {
-  border-color: var(--accent);
+  border-color: var(--seal);
 }
 
 .dropHint {
@@ -64,7 +66,7 @@
 }
 
 .err {
-  color: #e03e3e;
+  color: var(--seal);
   font-size: 12.5px;
 }
 
@@ -77,10 +79,12 @@
 .btn {
   border: none;
   background: var(--accent);
-  color: #fff;
-  border-radius: 8px;
+  color: #f7f1e6;
+  border-radius: 0;
   padding: 7px 18px;
+  font-family: var(--serif);
   font-size: 13px;
+  letter-spacing: 0.06em;
   cursor: pointer;
   font-weight: 600;
 }
@@ -89,9 +93,11 @@
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--fg);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 7px 14px;
+  font-family: var(--serif);
   font-size: 13px;
+  letter-spacing: 0.06em;
   cursor: pointer;
 }
 

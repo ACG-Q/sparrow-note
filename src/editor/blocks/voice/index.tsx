@@ -1,5 +1,5 @@
 import { createReactBlockSpec } from "@blocknote/react";
-import { BlockIcon, MicIcon, TrashIcon } from "../../icons";
+import { MicIcon, TrashIcon } from "../../icons";
 import { useBlockEdit } from "../_shared/BlockEditContext";
 import { ActionBtn, BlockCard } from "../_shared/BlockShell";
 import { voiceConfig, type VoiceProps } from "./config";
@@ -18,9 +18,9 @@ function VoiceRender({ block, editor }: VoiceProps) {
 
   return (
     <BlockCard
-      chip={<BlockIcon type="voice" />}
       active={pending?.blockId === block.id}
       onClick={openRecorder}
+      alwaysActions={!block.props.url}
       actions={
         <>
           <ActionBtn icon={<MicIcon />} label="录音" onClick={openRecorder} />

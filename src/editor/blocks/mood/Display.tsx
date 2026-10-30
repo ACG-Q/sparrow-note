@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+import { moodChar } from "../../../lib/mood";
 import s from "./styles.module.css";
 
 export default forwardRef<
@@ -18,7 +19,7 @@ export default forwardRef<
         onClick={onTogglePicker}
         aria-label="选择心情"
       >
-        {emoji}
+        {moodChar(emoji)}
       </button>
       <div className={s.note} ref={contentRef} />
     </div>

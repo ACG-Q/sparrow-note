@@ -1,0 +1,269 @@
+.list {
+  width: 300px;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border-right: 1px solid var(--rule);
+  overflow: hidden;
+}
+
+/* ---------- 头部 ---------- */
+.head {
+  flex: none;
+  padding: 22px 16px 12px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--card);
+}
+
+.month {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.num {
+  font-family: var(--serif-latin);
+  font-size: 28px;
+  line-height: .9;
+  color: var(--ink);
+}
+
+.cn {
+  font-family: var(--serif);
+  font-size: 16px;
+  letter-spacing: .18em;
+  color: var(--ink);
+}
+
+.en {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .1em;
+  color: var(--muted-2);
+}
+
+.counts {
+  margin: 8px 0 0;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .06em;
+  color: var(--muted-ink);
+}
+
+.filters {
+  display: flex;
+  gap: 16px;
+  margin-top: 11px;
+}
+
+.filters button {
+  border: none;
+  background: transparent;
+  padding: 3px 0;
+  font-family: var(--serif);
+  font-size: 12.5px;
+  letter-spacing: .1em;
+  color: var(--muted-ink);
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  transition: color .16s ease, border-color .16s ease;
+}
+
+.filters button[aria-pressed="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--seal);
+}
+
+/* ---------- 目录 ---------- */
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-strong) transparent;
+}
+
+.scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.scroll::-webkit-scrollbar-thumb {
+  background: var(--rule);
+}
+
+.day {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 9px;
+  padding: 13px 12px 2px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.mark {
+  text-align: center;
+  padding-top: 2px;
+  border-right: 1px solid var(--rule-soft);
+}
+
+.d {
+  display: block;
+  font-family: var(--serif-latin);
+  font-size: 17px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.w {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .04em;
+  color: var(--muted-2);
+}
+
+.today .d,
+.today .w {
+  color: var(--seal);
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-bottom: 10px;
+}
+
+.entry {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 6px 9px;
+  border: none;
+  border-left: 2px solid transparent;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease;
+}
+
+.entry:hover {
+  background: rgba(185, 174, 152, .16);
+}
+
+.entryOn {
+  background: var(--paper);
+  border-left-color: var(--seal);
+}
+
+.t {
+  font-family: var(--serif);
+  font-size: 14.5px;
+  line-height: 1.45;
+  letter-spacing: .03em;
+  color: var(--ink);
+}
+
+.x {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted-ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-wrap: pretty;
+}
+
+.m {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .04em;
+  color: var(--muted-2);
+}
+
+.m i {
+  font-style: normal;
+  color: var(--rule-strong);
+}
+
+/* 心情：印章字，与时间线同一套 */
+.moodMark {
+  font-family: var(--serif);
+  font-size: 11px;
+  letter-spacing: 0;
+  color: var(--seal);
+}
+
+.older {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 4px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  color: var(--muted-2);
+}
+
+.older::before,
+.older::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--rule-soft);
+}
+
+.end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 12px 22px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .08em;
+  color: var(--muted-2);
+}
+
+.sq {
+  width: 4px;
+  height: 4px;
+  background: var(--rule-strong);
+  transform: rotate(45deg);
+}
+
+.empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--muted-ink);
+  font-size: 13px;
+}
+
+.empty p {
+  margin: 0 0 12px;
+}
+
+.empty button {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  font-family: var(--serif);
+  font-size: 12.5px;
+  letter-spacing: .08em;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .list {
+    display: none;
+  }
+}

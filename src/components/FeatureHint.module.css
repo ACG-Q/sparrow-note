@@ -1,0 +1,100 @@
+/* 右下角浮动说明卡：纸面、1px 边线、0 圆角，和其他浮层同一套语言 */
+.hint {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 80;
+  width: 268px;
+  max-width: calc(100vw - 32px);
+  padding: 11px 14px 13px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: 0 18px 40px -28px rgba(25, 23, 19, 0.55);
+  pointer-events: none;
+  animation: hintIn 120ms ease-out;
+}
+
+@keyframes hintIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kicker {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--muted-2);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-top: 4px;
+}
+
+.glyph {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1;
+  color: var(--seal);
+}
+
+.title {
+  font-family: var(--serif);
+  font-size: 14.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+
+.desc {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--muted-ink);
+}
+
+.notes {
+  margin: 7px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--rule-soft);
+  padding-top: 7px;
+}
+
+.notes li {
+  position: relative;
+  padding-left: 11px;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.85;
+  color: var(--muted-2);
+}
+
+.notes li + li {
+  margin-top: 2px;
+}
+
+.notes li::before {
+  content: "·";
+  position: absolute;
+  left: 2px;
+  color: var(--seal);
+}
+
+/* 窄屏：让开底部标签栏 */
+@media (max-width: 768px) {
+  .hint {
+    right: 12px;
+    left: 12px;
+    width: auto;
+    bottom: 76px;
+  }
+}

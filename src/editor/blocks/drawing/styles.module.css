@@ -9,7 +9,7 @@
 .color {
   width: 22px;
   height: 22px;
-  border-radius: 50%;
+  border-radius: 0;
   border: 2px solid transparent;
   cursor: pointer;
   padding: 0;
@@ -23,7 +23,7 @@
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--fg);
-  border-radius: 6px;
+  border-radius: 0;
   padding: 4px 10px;
   font-size: 12.5px;
   cursor: pointer;
@@ -36,7 +36,7 @@
   height: auto;
   aspect-ratio: 720 / 320;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 0;
   touch-action: none;
   cursor: crosshair;
   background: #fff;
@@ -45,5 +45,5 @@
 .img {
   display: block;
   max-width: 100%;
-  border-radius: 6px;
+  border-radius: 0;
 }

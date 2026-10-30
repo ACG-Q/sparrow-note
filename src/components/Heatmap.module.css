@@ -1,37 +1,71 @@
 .grid {
   display: grid;
-  grid-template-rows: repeat(7, 12px);
+  grid-template-rows: repeat(7, 11px);
   grid-auto-flow: column;
-  grid-auto-columns: 12px;
+  grid-auto-columns: 11px;
   gap: 3px;
   justify-content: start;
 }
 
 .cell {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   border: none;
-  border-radius: 2px;
+  border-radius: 0;
   padding: 0;
   cursor: pointer;
 }
 
+/* 四级强度都从纸色混出来，不叠透明色：在纸面上是同一支砖红，不是脏粉 */
 .lv0 {
-  background: var(--hover);
+  background: var(--paper-3);
 }
 
 .lv1 {
-  background: rgba(35, 131, 226, 0.25);
+  background: color-mix(in srgb, var(--seal) 30%, var(--paper-3));
 }
 
 .lv2 {
-  background: rgba(35, 131, 226, 0.5);
+  background: color-mix(in srgb, var(--seal) 52%, var(--paper-3));
 }
 
 .lv3 {
-  background: rgba(35, 131, 226, 0.75);
+  background: color-mix(in srgb, var(--seal) 74%, var(--paper-3));
 }
 
 .lv4 {
-  background: var(--accent);
+  background: var(--seal-fill);
+}
+
+/* 桌面上空间更大，格子放大一点更好点 */
+@media (min-width: 900px) {
+  .grid {
+    grid-template-rows: repeat(7, 13px);
+    grid-auto-columns: 13px;
+    gap: 3px;
+  }
+
+  .cell {
+    width: 13px;
+    height: 13px;
+  }
+}
+
+/* 铺满容器宽度：16 列等分、格子保持正方。
+   汇总页的回顾区要把格子当一整块图看，抽屉里仍用上面的固定尺寸。
+   用 .grid.fluid 压过上面 900px 媒体查询里的固定宽高。 */
+.grid.fluid {
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  grid-template-rows: repeat(7, auto);
+  grid-auto-flow: column;
+  grid-auto-columns: auto;
+  gap: 3px;
+  justify-content: stretch;
+}
+
+.grid.fluid .cell {
+  width: auto;
+  height: auto;
+  min-width: 0;
+  aspect-ratio: 1 / 1;
 }

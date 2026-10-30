@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
-import { BlockIcon, PencilIcon } from "../../icons";
+import { PencilIcon, TrashIcon } from "../../icons";
 import { ActionBtn, BlockCard } from "../_shared/BlockShell";
-import shared from "../_shared/blockCommon.module.css";
+import { FloatingPanel } from "../_shared/FloatingPanel";
 import { moodConfig, type MoodProps } from "./config";
 import MoodDisplay from "./Display";
 import MoodEdit from "./Edit";
@@ -11,29 +11,22 @@ function MoodRender({ block, editor, contentRef }: MoodProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [open]);
-
   return (
-    <div
-      ref={rootRef}
-      className={open ? shared.editingLayer : undefined}
-      style={{ position: "relative", width: "100%" }}
-    >
+    <div ref={rootRef} style={{ width: "100%" }}>
       <BlockCard
-        chip={<BlockIcon type="mood" />}
         active={open}
-        className={open ? shared.editingRaised : undefined}
-        onClick={() => {
-          if (!open) setOpen(true);
-        }}
-        actions={<ActionBtn icon={<PencilIcon />} label="编辑心情" onClick={() => setOpen(true)} />}
+        onClick={() => setOpen(true)}
+        actions={
+          <>
+            <ActionBtn icon={<PencilIcon />} label="编辑心情" onClick={() => setOpen(true)} />
+            <ActionBtn
+              icon={<TrashIcon />}
+              label="删除心情"
+              danger
+              onClick={() => editor.removeBlocks([block])}
+            />
+          </>
+        }
       >
         <MoodDisplay
           emoji={block.props.emoji}
@@ -42,16 +35,16 @@ function MoodRender({ block, editor, contentRef }: MoodProps) {
         />
       </BlockCard>
       {open && (
-        <div className={shared.inlineMask} onClick={() => setOpen(false)} contentEditable={false} />
-      )}
-      {open && (
-        <MoodEdit
-          emoji={block.props.emoji}
-          onPick={(e) => {
-            editor.updateBlock(block, { props: { emoji: e } });
-            setOpen(false);
-          }}
-        />
+        <FloatingPanel anchor={rootRef.current} width={244} onClose={() => setOpen(false)}>
+          <MoodEdit
+            emoji={block.props.emoji}
+            onClose={() => setOpen(false)}
+            onPick={(e) => {
+              editor.updateBlock(block, { props: { emoji: e } });
+              setOpen(false);
+            }}
+          />
+        </FloatingPanel>
       )}
     </div>
   );

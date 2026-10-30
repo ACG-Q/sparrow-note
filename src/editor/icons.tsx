@@ -75,6 +75,14 @@ export function BlockIcon({ type }: { type: string }) {
           <path d="M4.75 9.75a5.25 5.25 0 0 0 10.5 0M10 15v2.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       );
+    case "sparrowTable":
+      // 自研大表格：格子网格
+      return (
+        <svg {...S}>
+          <rect x="2.75" y="3.75" width="14.5" height="12.5" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M2.75 7.75h14.5M8.6 3.75v12.5M14.4 3.75v12.5M2.75 12h14.5" stroke="currentColor" strokeWidth="1.2" />
+        </svg>
+      );
     case "image":
       return (
         <svg {...S}>

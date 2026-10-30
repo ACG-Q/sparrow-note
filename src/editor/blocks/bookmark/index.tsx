@@ -1,12 +1,12 @@
-import { useEffect } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
-import { BlockIcon, PencilIcon } from "../../icons";
+import { PencilIcon, TrashIcon } from "../../icons";
 import { useBlockEdit } from "../_shared/BlockEditContext";
+import { useAutoEditOnEmpty } from "../_shared/useAutoEditOnEmpty";
 import { ActionBtn, BlockCard, useStartEmpty } from "../_shared/BlockShell";
 import { bookmarkConfig, type BookmarkProps } from "./config";
 import BookmarkDisplay from "./Display";
 
-function BookmarkRender({ block }: BookmarkProps) {
+function BookmarkRender({ block, editor }: BookmarkProps) {
   const { pending, open, close } = useBlockEdit();
   const startEmpty = useStartEmpty(block.props.title, block.props.url);
   const openEdit = () =>
@@ -18,19 +18,23 @@ function BookmarkRender({ block }: BookmarkProps) {
       iconType: "bookmark",
     });
 
-  useEffect(() => {
-    if (!startEmpty) return;
-    openEdit();
-    return close;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useAutoEditOnEmpty(startEmpty, openEdit, close);
 
   return (
     <BlockCard
-      chip={<BlockIcon type="bookmark" />}
       active={pending?.blockId === block.id}
       onClick={openEdit}
-      actions={<ActionBtn icon={<PencilIcon />} label="编辑书签" onClick={openEdit} />}
+      actions={
+          <>
+            <ActionBtn icon={<PencilIcon />} label="编辑书签" onClick={openEdit} />
+            <ActionBtn
+              icon={<TrashIcon />}
+              label="删除书签"
+              danger
+              onClick={() => editor.removeBlocks([block])}
+            />
+          </>
+        }
     >
       <BookmarkDisplay block={block} />
     </BlockCard>

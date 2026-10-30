@@ -24,11 +24,13 @@
   letter-spacing: 1px;
 }
 
+/* 站点首字母：印章字，和其它块的首字标同一套 */
 .chipLogo {
-  background: linear-gradient(135deg, #24292f, #57606a);
-  color: #fff;
+  background: var(--seal-fill);
+  color: #f7f1e6;
+  font-family: var(--serif);
+  font-size: 14px;
   font-weight: 700;
-  font-size: 13px;
 }
 
 .strength {
@@ -46,27 +48,26 @@
 .seg {
   flex: 1;
   height: 4px;
-  border-radius: 2px;
+  border-radius: 0;
   background: var(--border);
   display: block;
 }
 
-.segF1 {
-  background: #e03e3e;
-}
-
-.segF2 {
-  background: #dfab01;
-}
-
-.segF3 {
-  background: var(--success, #0f7b6c);
+/* 强度条只表示「填了几格」，强弱由旁边那个字说；
+   只有「弱 / 一般」时文字用印章色示警，不再用一整套交通灯色 */
+.segOn {
+  background: var(--ink);
 }
 
 .strengthText {
   font-size: 11.5px;
   color: var(--fg-muted);
   flex: none;
+}
+
+/* 与 .strengthText 同时出现时占优：弱 / 一般 用印章色示警 */
+.strengthText.strengthWeak {
+  color: var(--seal);
 }
 
 .totpRow {
@@ -87,7 +88,7 @@
 .totpBar {
   flex: 1;
   height: 4px;
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--ed-block-hover);
   overflow: hidden;
 }

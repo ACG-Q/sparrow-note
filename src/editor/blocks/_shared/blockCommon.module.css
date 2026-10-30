@@ -1,8 +1,9 @@
 .card {
   position: relative;
   cursor: pointer;
-  border-radius: 8px;
-  padding: 12px 14px;
+  border-radius: 0;
+  /* 左右不留内边距：块内容与正文段落共用同一条左缘 */
+  padding: 10px 0;
   margin: 4px 0;
   display: flex;
   flex: 1;
@@ -22,12 +23,28 @@
   box-shadow: inset 0 0 0 2px var(--accent);
 }
 
+/* 触屏没有真正的悬停：底色别留，操作钮常显——否则编辑/删除根本按不到 */
+@media (hover: none) {
+  .card:hover {
+    background: transparent;
+  }
+
+  .actions {
+    opacity: 1;
+  }
+
+  .cardBody {
+    padding-right: 58px;
+  }
+}
+
 .chip {
   flex: none;
   width: 28px;
   height: 28px;
-  border-radius: 6px;
-  background: var(--ed-block-hover);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--rule);
   color: var(--fg-muted);
   display: inline-flex;
   align-items: center;
@@ -47,6 +64,39 @@
   gap: 4px;
 }
 
+/* ---------- 块内排版 ----------
+   参照心情块：靠内容自己的排印立住，不靠图标格。
+   标题一律衬线、附注一律等宽小字，八个自定义块共用这两档。 */
+.bcBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.bcTitle {
+  font-family: var(--serif);
+  font-size: 15.5px;
+  line-height: 1.5;
+  letter-spacing: .04em;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bcMeta {
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.7;
+  letter-spacing: .06em;
+  color: var(--muted-2);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .actions {
   position: absolute;
   top: 8px;
@@ -63,7 +113,7 @@
   border: 1px solid var(--ed-pop-border);
   background: var(--bg);
   color: var(--fg-muted);
-  border-radius: 6px;
+  border-radius: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -123,7 +173,7 @@
   border: 1px solid var(--accent);
   background: var(--accent);
   color: #fff;
-  border-radius: 6px;
+  border-radius: 0;
   padding: 4px 14px;
   font-size: 12.5px;
   cursor: pointer;
@@ -137,7 +187,7 @@
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--fg);
-  border-radius: 9px;
+  border-radius: 0;
   padding: 8px 11px;
   font-size: 14px;
   outline: none;
@@ -179,18 +229,13 @@
   align-items: center;
 }
 
-.inlineMask {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 15, 15, 0.45);
-  z-index: 1;
+
+
+/* 聚焦到块内也能看到操作钮；空块的按钮常显 */
+.card:focus-within .actions {
+  opacity: 1;
 }
 
-.editingLayer {
-  position: relative;
-  z-index: 40;
-}
-
-.editingRaised {
-  z-index: 2;
+.actionsOn {
+  opacity: 1;
 }

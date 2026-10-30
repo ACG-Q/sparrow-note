@@ -1,4 +1,3 @@
-import s from "./styles.module.css";
 import shared from "../_shared/blockCommon.module.css";
 import type { ContactBlockT } from "./config";
 
@@ -9,9 +8,9 @@ export default function ContactDisplay({ block }: { block: ContactBlockT }) {
   }
   const sub = [phone, company, title].filter(Boolean).join(" · ");
   return (
-    <div className={s.main}>
-      <span className={s.name}>{name || "未命名联系人"}</span>
-      {sub && <span className={s.sub}>{sub}</span>}
+    <div className={shared.bcBody}>
+      <span className={shared.bcTitle}>{name || "未命名联系人"}</span>
+      {sub && <span className={shared.bcMeta}>{sub}</span>}
     </div>
   );
 }

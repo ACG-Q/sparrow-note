@@ -9,6 +9,10 @@ export const anniversaryConfig = {
     date: { default: "" },
     kind: { default: "anniversary", values: ["count", "down", "anniversary"] },
     annual: { default: true },
+    /** "on" 时参与每日提醒 */
+    remind: { default: "off" },
+    /** 提前几天（0 表示当天） */
+    remindDays: { default: "0" },
   },
   content: "none",
 } as const;

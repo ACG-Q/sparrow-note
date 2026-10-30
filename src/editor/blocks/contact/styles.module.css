@@ -1,5 +1,5 @@
 .chipAvatar {
-  border-radius: 50%;
+  border-radius: 0;
   background: linear-gradient(135deg, var(--accent), #7c3aed);
   color: #fff;
   font-size: 12px;

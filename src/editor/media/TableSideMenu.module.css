@@ -1,0 +1,79 @@
+/* 侧栏拖拽菜单里的表格项：沿用 BlockNote 菜单容器，只补自己的按钮样式 */
+.item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .02em;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: var(--paper-3);
+  color: var(--ink);
+}
+
+.sep {
+  display: block;
+  height: 1px;
+  margin: 4px 8px;
+  background: var(--rule-soft);
+}
+
+/* 表头行/列的数量选择：一行标签 + 几个数字按钮 */
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 5px;
+}
+
+.headerLabel {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .06em;
+  color: var(--muted-ink);
+}
+
+.headerBtns {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.headerBtn {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.headerBtn:hover {
+  border-color: var(--rule-strong);
+  background: var(--paper-3);
+}
+
+.headerOn {
+  border-color: var(--seal);
+  background: var(--seal);
+  color: var(--paper);
+}
+
+.headerBtn:focus-visible {
+  outline: 1px solid var(--seal);
+  outline-offset: 1px;
+}

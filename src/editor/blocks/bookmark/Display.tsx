@@ -10,9 +10,9 @@ export default function BookmarkDisplay({ block }: { block: BookmarkBlockT }) {
     return <span className={shared.empty}>点击填写书签</span>;
   }
   return (
-    <div className={s.body}>
-      <span className={s.title}>{title || "未命名链接"}</span>
-      {url && <span className={s.url}>{url}</span>}
+    <div className={shared.bcBody}>
+      <span className={shared.bcTitle}>{title || "未命名链接"}</span>
+      {url && <span className={shared.bcMeta}>{url}</span>}
       {valid && (
         <a
           className={s.openRow}

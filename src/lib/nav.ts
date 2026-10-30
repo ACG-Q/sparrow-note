@@ -1,4 +1,4 @@
-export type NavView = "timeline" | "summary" | "profile";
+export type NavView = "timeline" | "summary" | "profile" | "checklist";
 
 export function noteHash(id: string): string {
   return `#/note/${id}`;

@@ -9,13 +9,13 @@ export default function AnniversaryDisplay({ block }: { block: AnniversaryBlockT
   }
   const stats = dayStats(kind as DayKind, date, annual);
   return (
-    <>
-      <span className={s.title}>{title || "点击填写名称"}</span>
+    <div className={shared.bcBody}>
+      <span className={shared.bcTitle}>{title || "点击填写名称"}</span>
       <span className={s.meta}>
         {stats && <span className={s.num}>{stats.num}</span>}
-        {stats?.tag && <span className={s.tag}>{stats.tag}</span>}
-        {date && <span className={s.date}>{stats?.sub ?? date}</span>}
+        {stats?.tag && <span className={shared.bcMeta}>{stats.tag}</span>}
+        {date && <span className={shared.bcMeta}>{stats?.sub ?? date}</span>}
       </span>
-    </>
+    </div>
   );
 }

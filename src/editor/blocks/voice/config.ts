@@ -6,6 +6,8 @@ export const voiceConfig = {
   propSchema: {
     ...defaultProps,
     url: { default: "" },
+    /** 静态波形："8,12,40,…"（0–100），录音/导入时算一次存下来 */
+    wave: { default: "" },
   },
   content: "none",
 } as const;

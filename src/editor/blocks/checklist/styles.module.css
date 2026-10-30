@@ -6,7 +6,30 @@
 .row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
+}
+
+/* 方角勾选框：和阅读态的清单同一个形状，不用浏览器默认样式 */
+.box {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rule-strong);
+  background: transparent;
+  color: #f7f1e6;
+  font-family: var(--mono);
+  font-size: 9px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.boxOn {
+  background: var(--seal-fill);
+  border-color: var(--seal-fill);
 }
 
 .text {
@@ -38,7 +61,7 @@
   font-size: 15px;
   cursor: pointer;
   padding: 0 4px;
-  border-radius: 4px;
+  border-radius: 0;
   visibility: hidden;
 }
 
@@ -47,7 +70,7 @@
 }
 
 .del:hover {
-  color: #e03e3e;
+  color: var(--seal);
 }
 
 .add {

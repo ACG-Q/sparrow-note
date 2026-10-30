@@ -9,3 +9,8 @@ webview-data/
 .DS_Store
 .superpowers/
 .agents/
+
+# 覆盖率产物（npm run coverage 生成）
+coverage/
+# 探针截图/临时产物（review/*.png 里只有少量是证据，.playwright-mcp 是工具缓存）
+.playwright-mcp/

@@ -12,12 +12,15 @@ function level(count: number): number {
 export function Heatmap({
   cells,
   onPickDate,
+  fluid = false,
 }: {
   cells: DayCount[];
   onPickDate: (date: string) => void;
+  /** 铺满容器宽度（16 列等分、格子正方）。汇总页的回顾区用，抽屉里仍用固定尺寸。 */
+  fluid?: boolean;
 }) {
   return (
-    <div className={s.grid}>
+    <div className={fluid ? `${s.grid} ${s.fluid}` : s.grid}>
       {cells.map((c) => (
         <button
           key={c.date}

@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>麻雀记 · 表格交互 demo</title>
+<style>
+  :root {
+    --paper: #f5f1e8;
+    --paper-2: #efe9dc;
+    --paper-3: #e8e1d2;
+    --ink: #191713;
+    --ink-2: #3d3931;
+    --muted: #7a7466;
+    --rule: #d9d1c0;
+    --rule-soft: #e4ddcf;
+    --seal: #8a3324;
+    --serif: "Songti SC", "Noto Serif SC", "Source Han Serif SC", "SimSun", Georgia, serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 56px 32px 120px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--ink);
+  }
+
+  .seal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: var(--seal);
+    color: var(--paper);
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .brand h1 {
+    margin: 0;
+    font-size: 22px;
+    letter-spacing: .14em;
+  }
+
+  .brand .sub {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: .18em;
+    color: var(--muted);
+  }
+
+  .note-title {
+    margin: 34px 0 8px;
+    font-size: 30px;
+    letter-spacing: .01em;
+  }
+
+  .note-meta {
+    margin: 0 0 30px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .06em;
+    color: var(--muted);
+  }
+
+  p.body {
+    margin: 0 0 18px;
+    font-size: 15px;
+    line-height: 1.95;
+    color: var(--ink-2);
+  }
+
+  /* ---------- 表格块 ---------- */
+  .table-block {
+    position: relative;
+    margin: 22px 0 30px;
+    padding-left: 34px;   /* 给左侧 ⋮⋮ 留位 */
+  }
+
+  .block-handle {
+    position: absolute;
+    left: 2px;
+    top: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 5px 4px;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: grab;
+    opacity: .25;
+    transition: opacity .12s;
+  }
+
+  .table-block:hover .block-handle,
+  .block-handle:focus-visible { opacity: 1; }
+
+  .block-handle:hover { border-color: var(--rule); background: var(--paper-2); }
+
+  .block-handle i {
+    display: block;
+    width: 3px;
+    height: 3px;
+    background: var(--muted);
+  }
+
+  /* 工具条：贴在表头上方，不随表格横向滚动移动 */
+  .table-tools {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 4px 6px;
+  }
+
+  .tool {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ink-2);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .04em;
+    cursor: pointer;
+    border-radius: 0;
+  }
+
+  .tool:hover { border-color: var(--rule); color: var(--seal); }
+  .tool.on { border-color: var(--seal); color: var(--seal); }
+
+  .tool.size { gap: 5px; font-variant-numeric: tabular-nums; }
+
+  .grid-icon {
+    display: grid;
+    grid-template-columns: repeat(3, 3px);
+    grid-template-rows: repeat(3, 3px);
+    gap: 1.5px;
+  }
+
+  .grid-icon i { background: currentColor; }
+
+  .sep { width: 1px; height: 16px; margin: 0 5px; background: var(--rule); }
+  .spacer { flex: 1; }
+
+  /* 表格滚动容器：只有它滚 */
+  .table-scroll {
+    overflow-x: auto;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  table {
+    border-collapse: collapse;
+    /* 列数多了就撑宽容器、触发横向滚动（列数 × 120px 由脚本写到 min-width） */
+    min-width: 100%;
+    width: auto;
+  }
+
+  th, td {
+    min-width: 120px;
+    padding: 10px 12px;
+    border: 1px solid var(--rule-soft);
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    text-align: left;
+    vertical-align: top;
+    outline: none;
+    overflow-wrap: anywhere;
+  }
+
+  th {
+    color: var(--ink);
+    font-weight: 600;
+    border-bottom-color: var(--rule);
+  }
+
+  td:focus, th:focus { background: var(--paper-3); }
+
+  .cell-active { box-shadow: inset 0 0 0 2px var(--seal); }
+
+  /* ---------- 弹出层 ---------- */
+  .pop {
+    position: absolute;
+    z-index: 40;
+    padding: 10px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    box-shadow: 0 18px 40px -30px rgba(25, 23, 19, .65);
+  }
+
+  .pop[hidden] { display: none; }
+
+  .size-grid {
+    display: grid;
+    gap: 3px;
+    margin-bottom: 10px;
+  }
+
+  .size-cell {
+    width: 18px;
+    height: 14px;
+    border: 1px solid var(--rule);
+    background: var(--paper-2);
+    cursor: pointer;
+  }
+
+  .size-cell.hot { background: var(--paper-3); border-color: var(--rule-strong); }
+
+  .size-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .size-row input {
+    width: 42px;
+    height: 26px;
+    padding: 0 6px;
+    border: 1px solid var(--rule);
+    background: var(--paper-2);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .size-row button {
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid var(--seal);
+    background: var(--seal);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+  }
+
+  .menu {
+    min-width: 132px;
+    padding: 4px;
+  }
+
+  .menu button {
+    display: block;
+    width: 100%;
+    padding: 7px 10px;
+    border: 0;
+    background: transparent;
+    color: var(--ink-2);
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .02em;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .menu button:hover { background: var(--paper-3); color: var(--ink); }
+  .menu button.danger:hover { color: var(--seal); }
+  .menu .msep { height: 1px; margin: 4px 6px; background: var(--rule-soft); }
+  .menu .mhead {
+    padding: 6px 10px 3px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .1em;
+    color: var(--muted);
+  }
+
+  /* ---------- 说明 ---------- */
+  .tips {
+    margin-top: 44px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .tips h2 {
+    margin: 0 0 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .16em;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .tips ol {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13.5px;
+    line-height: 2;
+    color: var(--ink-2);
+  }
+
+  .tips code {
+    padding: 1px 5px;
+    background: var(--paper-3);
+    font-family: var(--mono);
+    font-size: 11.5px;
+  }
+
+  .hint-row {
+    margin-top: 14px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .hint-row button {
+    padding: 6px 12px;
+    border: 1px solid var(--rule);
+    background: transparent;
+    color: var(--ink-2);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+  }
+
+  .hint-row button:hover { border-color: var(--seal); color: var(--seal); }
+
+  .status {
+    margin-top: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: .04em;
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 28px 16px 80px; }
+    .table-block { padding-left: 0; }
+    .block-handle { display: none; }
+    .tool { height: 34px; min-width: 36px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="brand">
+    <span class="seal">雀</span>
+    <h1>麻雀记</h1>
+    <span class="sub">SPARROW NOTE · 表格交互 DEMO</span>
+  </div>
+
+  <h2 class="note-title">十月二十五日</h2>
+  <p class="note-meta">2026 · 10 · 25 ／ 周日 ／ 交互原型</p>
+
+  <p class="body">这是一个可交互的表格样例：工具条贴在表头上方，表格自己横向滚动，工具条不跟着跑。下面的按钮都能点，单元格能直接打字。</p>
+
+  <div class="table-block" id="tableBlock">
+    <button class="block-handle" id="handle" title="块菜单" aria-label="块菜单">
+      <i></i><i></i><i></i><i></i><i></i><i></i>
+    </button>
+
+    <div class="table-tools">
+      <button class="tool size" id="sizeBtn" title="表格尺寸">
+        <span class="grid-icon"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        <span id="sizeLabel">3×3</span>
+      </button>
+      <span class="sep"></span>
+      <button class="tool" data-align="left" title="整列左对齐">≡左</button>
+      <button class="tool" data-align="center" title="整列居中">≡中</button>
+      <button class="tool" data-align="right" title="整列右对齐">≡右</button>
+      <span class="sep"></span>
+      <button class="tool" id="addRow" title="在下方插入一行">＋行</button>
+      <button class="tool" id="addCol" title="在右侧插入一列">＋列</button>
+      <span class="spacer"></span>
+      <button class="tool" id="moreBtn" title="更多">⋯</button>
+    </div>
+
+    <div class="table-scroll" id="tableScroll">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th contenteditable="true">项目</th>
+            <th contenteditable="true">数量</th>
+            <th contenteditable="true">备注</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td contenteditable="true">块类型</td>
+            <td contenteditable="true">24</td>
+            <td contenteditable="true">全量覆盖</td>
+          </tr>
+          <tr>
+            <td contenteditable="true">自定义块</td>
+            <td contenteditable="true">10</td>
+            <td contenteditable="true">心情到语音</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 尺寸面板 -->
+    <div class="pop" id="sizePop" hidden>
+      <div class="size-grid" id="sizeGrid"></div>
+      <div class="size-row">
+        <input id="rowsInput" type="number" min="1" max="30" value="3" aria-label="行数" />
+        <span>×</span>
+        <input id="colsInput" type="number" min="1" max="12" value="3" aria-label="列数" />
+        <button id="sizeApply">确定</button>
+      </div>
+    </div>
+
+    <!-- 更多菜单 -->
+    <div class="pop menu" id="morePop" hidden>
+      <button data-act="merge">合并右侧单元格</button>
+      <button data-act="split">拆分单元格</button>
+      <span class="msep"></span>
+      <button data-act="delRow">删除本行</button>
+      <button data-act="delCol">删除本列</button>
+      <span class="msep"></span>
+      <button data-act="delTable" class="danger">删除表格</button>
+    </div>
+
+    <!-- 块菜单 -->
+    <div class="pop menu" id="blockPop" hidden>
+      <span class="mhead">表格</span>
+      <button data-act="addRowBelow">在下方插入行</button>
+      <button data-act="addColRight">在右侧插入列</button>
+      <button data-act="delRow">删除本行</button>
+      <button data-act="delCol">删除本列</button>
+      <span class="msep"></span>
+      <span class="mhead">块</span>
+      <button data-act="toggleHead">切换表头行</button>
+      <button data-act="delTable" class="danger">删除表格</button>
+    </div>
+  </div>
+
+  <p class="body">表格后面的段落，用来对照间距。</p>
+
+  <div class="tips">
+    <h2>可以试这些</h2>
+    <ol>
+      <li>点单元格打字；工具条上的 <code>＋行</code> <code>＋列</code> 会在当前格子下方/右侧插入</li>
+      <li>点最左的 <code>▦ 3×3</code> → 网格拖选或直接填数字 → 确定</li>
+      <li>点 <code>≡左 / ≡中 / ≡右</code> 给光标所在整列对齐</li>
+      <li>点 <code>⋯</code>：合并右侧单元格、拆分、删本行、删本列、删除表格</li>
+      <li>鼠标移到表格左侧的 <code>⋮⋮</code>：块菜单里也有一份表格命令</li>
+      <li>下面两个按钮用来验证「表格滚动时工具条不动」</li>
+    </ol>
+    <div class="hint-row">
+      <button id="demoScroll">横向滚到底 →</button>
+      <button id="demoReset">滚回开头</button>
+      <button id="demoGrow">撑成 8 列宽表</button>
+    </div>
+    <p class="status" id="status"></p>
+  </div>
+</div>
+
+<script>
+(function () {
+  const tbl = document.getElementById("tbl");
+  const scroll = document.getElementById("tableScroll");
+  const sizeLabel = document.getElementById("sizeLabel");
+  const sizePop = document.getElementById("sizePop");
+  const sizeGrid = document.getElementById("sizeGrid");
+  const morePop = document.getElementById("morePop");
+  const blockPop = document.getElementById("blockPop");
+  const rowsInput = document.getElementById("rowsInput");
+  const colsInput = document.getElementById("colsInput");
+  const statusEl = document.getElementById("status");
+
+  let activeCell = tbl.querySelector("th") || tbl.querySelector("td");
+  let activeAlign = "left";
+
+  const allRows = () => Array.from(tbl.querySelectorAll("tr"));
+  const bodyRows = () => Array.from(tbl.querySelectorAll("tbody tr"));
+  const headRow = () => tbl.querySelector("thead tr");
+  const cellIndex = (cell) => Array.from(cell.parentElement.children).indexOf(cell);
+  const rowIndex = (cell) => allRows().indexOf(cell.parentElement);
+  const cols = () => (allRows()[0] ? allRows()[0].children.length : 0);
+
+  function mark(cell) {
+    tbl.querySelectorAll(".cell-active").forEach((c) => c.classList.remove("cell-active"));
+    if (cell) {
+      activeCell = cell;
+      cell.classList.add("cell-active");
+      activeAlign = getComputedStyle(cell).textAlign || "left";
+      document.querySelectorAll("[data-align]").forEach((b) =>
+        b.classList.toggle("on", b.dataset.align === activeAlign)
+      );
+    }
+    updateStatus();
+  }
+
+  function updateStatus() {
+    const r = allRows().length;
+    const c = cols();
+    tbl.style.minWidth = "max(100%, " + c * 120 + "px)";
+    sizeLabel.textContent = r + "×" + c;
+    rowsInput.value = r;
+    colsInput.value = c;
+    statusEl.textContent =
+      "表格 " + r + " 行 × " + c + " 列　｜　滚动位置 " +
+      Math.round(scroll.scrollLeft) + "px　｜　工具条跟着表头走，不跟着内容走";
+  }
+
+  function makeCell(tag, text) {
+    const el = document.createElement(tag);
+    el.contentEditable = "true";
+    el.textContent = text || "";
+    return el;
+  }
+
+  function addRow(afterCell) {
+    const row = afterCell ? rowIndex(afterCell) + 1 : allRows().length;
+    const tr = document.createElement("tr");
+    for (let i = 0; i < cols(); i++) tr.appendChild(makeCell("td", ""));
+    const rows = allRows();
+    if (row >= rows.length) tbl.querySelector("tbody").appendChild(tr);
+    else rows[row].before(tr);
+    mark(tr.children[Math.min(cellIndex(afterCell || tr.children[0]), tr.children.length - 1)]);
+  }
+
+  function addCol(afterCell) {
+    const at = cellIndex(afterCell) + 1;
+    allRows().forEach((tr, i) => {
+      const cell = makeCell(i === 0 ? "th" : "td", "");
+      const ref = tr.children[at];
+      if (ref) ref.before(cell);
+      else tr.appendChild(cell);
+    });
+    mark(allRows()[rowIndex(afterCell)].children[at]);
+  }
+
+  function delRow(cell) {
+    if (allRows().length <= 1) return;
+    const tr = cell.parentElement;
+    const next = tr.nextElementSibling || tr.previousElementSibling;
+    tr.remove();
+    if (next) mark(next.children[0]);
+    updateStatus();
+  }
+
+  function delCol(cell) {
+    if (cols() <= 1) return;
+    const at = cellIndex(cell);
+    allRows().forEach((tr) => tr.children[at] && tr.children[at].remove());
+    mark(allRows()[rowIndex(cell)] ? allRows()[rowIndex(cell)].children[Math.max(0, at - 1)] : null);
+  }
+
+  function align(at, dir) {
+    allRows().forEach((tr) => {
+      const c = tr.children[at];
+      if (c) { c.style.textAlign = dir; c.querySelectorAll("*").forEach((x) => (x.style.textAlign = dir)); }
+    });
+  }
+
+  function mergeRight(cell) {
+    const next = cell.nextElementSibling;
+    if (!next) return;
+    cell.colSpan = (cell.colSpan || 1) + (next.colSpan || 1);
+    if (!cell.textContent.trim()) cell.textContent = next.textContent;
+    next.remove();
+    mark(cell);
+    updateStatus();
+  }
+
+  function splitCell(cell) {
+    const span = cell.colSpan || 1;
+    if (span <= 1) return;
+    cell.colSpan = 1;
+    for (let i = 1; i < span; i++) {
+      const td = makeCell(cell.tagName.toLowerCase(), "");
+      cell.after(td);
+    }
+    mark(cell);
+    updateStatus();
+  }
+
+  function rebuild(newRows, newCols) {
+    const rows = Math.max(1, Math.min(30, newRows | 0));
+    const cs = Math.max(1, Math.min(12, newCols | 0));
+    const head = headRow();
+    const body = tbl.querySelector("tbody");
+
+    // 列
+    while (cols() > cs) {
+      allRows().forEach((tr) => tr.lastElementChild && tr.lastElementChild.remove());
+    }
+    while (cols() < cs) {
+      allRows().forEach((tr, i) => tr.appendChild(makeCell(i === 0 ? "th" : "td", "")));
+    }
+    // 行
+    let bodyCount = bodyRows().length;
+    while (bodyCount + 1 > rows) { body.lastElementChild.remove(); bodyCount--; }
+    while (bodyCount + 1 < rows) {
+      const tr = document.createElement("tr");
+      for (let i = 0; i < cs; i++) tr.appendChild(makeCell("td", ""));
+      body.appendChild(tr);
+      bodyCount++;
+    }
+    mark(head.children[0]);
+  }
+
+  // ---------- 事件 ----------
+  tbl.addEventListener("focusin", (e) => {
+    const cell = e.target.closest("td, th");
+    if (cell) mark(cell);
+  });
+
+  tbl.addEventListener("mouseover", (e) => {
+    const cell = e.target.closest("td, th");
+    if (cell && cell !== activeCell) mark(cell);
+  });
+
+  document.getElementById("addRow").onclick = () => addRow(activeCell);
+  document.getElementById("addCol").onclick = () => addCol(activeCell);
+
+  document.querySelectorAll("[data-align]").forEach((btn) => {
+    btn.onclick = () => {
+      if (!activeCell) return;
+      align(cellIndex(activeCell), btn.dataset.align);
+      mark(activeCell);
+    };
+  });
+
+  // 尺寸面板
+  const MAX = 10;
+  for (let r = 1; r <= MAX; r++) {
+    for (let c = 1; c <= MAX; c++) {
+      const d = document.createElement("button");
+      d.className = "size-cell";
+      d.dataset.r = r;
+      d.dataset.c = c;
+      d.style.gridColumn = c;
+      d.style.gridRow = r;
+      d.title = r + "×" + c;
+      d.onmouseenter = () => paintSize(r, c);
+      d.onclick = () => { rebuild(r, c); sizePop.hidden = true; };
+      sizeGrid.appendChild(d);
+    }
+  }
+  sizeGrid.style.gridTemplateColumns = "repeat(" + MAX + ", 18px)";
+
+  function paintSize(r, c) {
+    sizeGrid.querySelectorAll(".size-cell").forEach((cell) => {
+      const on = +cell.dataset.r <= r && +cell.dataset.c <= c;
+      cell.classList.toggle("hot", on);
+    });
+    sizeLabel.textContent = r + "×" + c;
+  }
+
+  document.getElementById("sizeBtn").onclick = (e) => {
+    e.stopPropagation();
+    closeAll(sizePop);
+    sizePop.hidden = !sizePop.hidden;
+    paintSize(allRows().length, cols());
+    sizePop.style.top = "34px";
+    sizePop.style.left = "0px";
+  };
+
+  document.getElementById("sizeApply").onclick = () => {
+    rebuild(Number(rowsInput.value), Number(colsInput.value));
+    sizePop.hidden = true;
+  };
+
+  // 更多菜单
+  document.getElementById("moreBtn").onclick = (e) => {
+    e.stopPropagation();
+    closeAll(morePop);
+    morePop.hidden = !morePop.hidden;
+    morePop.style.top = "34px";
+    morePop.style.left = "auto";
+    morePop.style.right = "0px";
+  };
+
+  morePop.onclick = (e) => {
+    const act = e.target.dataset && e.target.dataset.act;
+    if (!act) return;
+    runAction(act);
+    morePop.hidden = true;
+  };
+
+  // 块菜单
+  document.getElementById("handle").onclick = (e) => {
+    e.stopPropagation();
+    closeAll(blockPop);
+    blockPop.hidden = !blockPop.hidden;
+    blockPop.style.top = "64px";
+    blockPop.style.left = "0px";
+  };
+
+  blockPop.onclick = (e) => {
+    const act = e.target.dataset && e.target.dataset.act;
+    if (!act) return;
+    runAction(act);
+    blockPop.hidden = true;
+  };
+
+  function runAction(act) {
+    if (!activeCell) return;
+    if (act === "merge") mergeRight(activeCell);
+    if (act === "split") splitCell(activeCell);
+    if (act === "delRow" || act === "addRowBelow") {
+      act === "delRow" ? delRow(activeCell) : addRow(activeCell);
+    }
+    if (act === "delCol" || act === "addColRight") {
+      act === "delCol" ? delCol(activeCell) : addCol(activeCell);
+    }
+    if (act === "toggleHead") {
+      const rows = allRows();
+      if (rows.length > 1) {
+        const first = rows[0];
+        const tbody = tbl.querySelector("tbody");
+        const thead = tbl.querySelector("thead");
+        if (first.parentElement.tagName === "THEAD") {
+          const clone = document.createElement("tr");
+          Array.from(first.children).forEach((c) => clone.appendChild(makeCell("td", c.textContent)));
+          tbody.prepend(clone);
+          first.remove();
+          if (!thead.children.length) thead.remove();
+        } else {
+          if (!tbl.querySelector("thead")) {
+            const th = document.createElement("thead");
+            tbl.prepend(th);
+          }
+          const clone = document.createElement("tr");
+          Array.from(first.children).forEach((c) => clone.appendChild(makeCell("th", c.textContent)));
+          tbl.querySelector("thead").appendChild(clone);
+          first.remove();
+        }
+        mark(allRows()[0].children[0]);
+      }
+    }
+    if (act === "delTable") {
+      document.getElementById("tableBlock").style.display = "none";
+    }
+    updateStatus();
+  }
+
+  function closeAll(except) {
+    [sizePop, morePop, blockPop].forEach((p) => { if (p !== except) p.hidden = true; });
+  }
+
+  document.addEventListener("click", (e) => {
+    if (e.target.closest(".pop")) return;
+    closeAll(null);
+  });
+
+  // 演示按钮
+  document.getElementById("demoScroll").onclick = () => {
+    scroll.scrollLeft = scroll.scrollWidth;
+    updateStatus();
+  };
+  document.getElementById("demoReset").onclick = () => {
+    scroll.scrollLeft = 0;
+    updateStatus();
+  };
+  document.getElementById("demoGrow").onclick = () => {
+    rebuild(6, 8);
+    scroll.scrollLeft = scroll.scrollWidth;
+    updateStatus();
+  };
+  scroll.addEventListener("scroll", () => {
+    // 只为更新状态栏读数；工具条本身在滚动容器外面，天然不会动
+    const s = document.getElementById("status");
+    if (s) s.dataset.scroll = scroll.scrollLeft;
+    updateStatus();
+  });
+
+  updateStatus();
+  mark(activeCell);
+})();
+</script>
+</body>
+</html>

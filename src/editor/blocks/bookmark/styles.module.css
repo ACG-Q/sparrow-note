@@ -15,41 +15,44 @@
   overflow-wrap: anywhere;
 }
 
+/* 打开链接：与地点块同一条安静的下划线链接 */
 .openRow {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 9px 0;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 500;
+  gap: 6px;
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  color: var(--muted-ink);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 3px;
   cursor: pointer;
-  background: var(--bg);
-  text-decoration: none;
   transition:
-    background 0.12s,
-    border-color 0.12s;
+    color 0.12s ease,
+    text-decoration-color 0.12s ease;
 }
 
 .openRow svg {
-  width: 15px;
-  height: 15px;
+  width: 13px;
+  height: 13px;
 }
 
 .openRow:hover {
-  background: color-mix(in srgb, var(--accent) 6%, transparent);
-  border-color: var(--accent);
+  color: var(--seal);
+  text-decoration-color: var(--seal);
 }
 
 .preview {
   display: flex;
   flex-direction: column;
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: 0;
   padding: 10px 12px;
 }
 

@@ -28,14 +28,37 @@ function getDb(): Promise<SqlDb> {
   return dbPromise;
 }
 
-function rowToNote(row: NoteRow): NoteDoc {
+/** 库里有几条记录读坏了（JSON 解析失败），供「设置 → 存储」提示 */
+let corruptRows = 0;
+
+export function getCorruptRowCount(): number {
+  return corruptRows;
+}
+
+/**
+ * 数据库行 → 笔记对象。
+ *
+ * `blocks` 是 JSON 字符串，历史上出现过写坏/被截断的情况；
+ * 坏一条就跳过一条并计数，不要让整个列表读不出来。
+ */
+export function rowToNote(row: NoteRow): NoteDoc | null {
+  let blocks: NoteDoc["blocks"];
+  try {
+    const parsed: unknown = JSON.parse(row.blocks);
+    if (!Array.isArray(parsed)) throw new Error("blocks 不是数组");
+    blocks = parsed as NoteDoc["blocks"];
+  } catch (err) {
+    corruptRows += 1;
+    console.error("[sparrow] 跳过一条读不出的笔记：", row.id, err);
+    return null;
+  }
   return {
     id: row.id,
     title: row.title,
     date: row.date,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    blocks: JSON.parse(row.blocks) as NoteDoc["blocks"],
+    blocks,
   };
 }
 
@@ -45,7 +68,13 @@ export const sqliteBackend: NotesBackend = {
     const rows = await db.select<NoteRow[]>(
       "SELECT id, title, date, created_at, updated_at, blocks FROM notes ORDER BY updated_at DESC",
     );
-    return rows.map(rowToNote);
+    corruptRows = 0;
+    const notes: NoteDoc[] = [];
+    for (const row of rows) {
+      const note = rowToNote(row);
+      if (note) notes.push(note);
+    }
+    return notes;
   },
 
   async putNote(note: NoteDoc): Promise<void> {

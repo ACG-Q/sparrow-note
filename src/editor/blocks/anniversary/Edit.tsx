@@ -54,6 +54,30 @@ export default function AnniversaryEdit({
           onChange={(v) => editor.updateBlock(block, { props: { annual: v } })}
         />
       )}
+      {kind !== "count" && (
+        <>
+          <SwitchRow
+            title="到期提醒"
+            desc="到设定时间时发一条系统通知（设置里可改时间）"
+            checked={block.props.remind === "on"}
+            onChange={(v) => editor.updateBlock(block, { props: { remind: v ? "on" : "off" } })}
+          />
+          {block.props.remind === "on" && (
+            <PanelSection label="提前">
+              <SegCtl
+                options={[
+                  { value: "0", label: "当天" },
+                  { value: "1", label: "1 天" },
+                  { value: "3", label: "3 天" },
+                  { value: "7", label: "7 天" },
+                ]}
+                value={block.props.remindDays}
+                onChange={(v) => editor.updateBlock(block, { props: { remindDays: v } })}
+              />
+            </PanelSection>
+          )}
+        </>
+      )}
       <PanelSection label="预览">
         <div className={s.preview}>
           <span className={s.previewName}>{block.props.title || "未命名"}</span>

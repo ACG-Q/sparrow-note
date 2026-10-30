@@ -1,0 +1,399 @@
+/* 编辑排版（纸面 / 墨色 / 印章红 / 衬线 + 等宽）。
+   调色板与字体令牌全局可用；移动端排版规则在下方 @media 内，
+   桌面端的布局改造等桌面版开发时再落。 */
+
+:root {
+  --paper: #f5f1e8;
+  --paper-2: #efe9dc;
+  --paper-3: #e8e1d2;
+  --card: #fbf9f3;
+  --ink: #191713;
+  --ink-2: #3d3931;
+  --muted-ink: #6a6457;
+  --muted-2: #6b6455;
+  --rule: #d9d1c0;
+  --rule-soft: #e4ddcf;
+  --rule-strong: #b9ae98;
+  --seal: #8a3324;
+  --seal-fill: #8a3324;
+
+  --serif: "Songti SC", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+  --serif-latin: Georgia, "Times New Roman", serif;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+
+  --bg: var(--paper);
+  --bg-sidebar: var(--paper-2);
+  --fg: var(--ink);
+  --fg-muted: var(--muted-ink);
+  --border: var(--rule);
+  --accent: var(--seal);
+  --accent-soft: rgba(138, 51, 36, .1);
+  --hover: rgba(185, 174, 152, .16);
+
+  --ed-placeholder: #8f8776;
+  --ed-block-hover: rgba(185, 174, 152, .12);
+  --ed-selection: rgba(138, 51, 36, .18);
+  --ed-menu-active: var(--paper-3);
+  --ed-pop-border: var(--rule);
+  --ed-pop-shadow: 0 12px 32px -20px rgba(25, 23, 19, .5);
+}
+
+html[data-theme="dark"] {
+  --paper: #141311;
+  --paper-2: #1a1916;
+  --paper-3: #24211a;
+  --card: #171613;
+  --ink: #ece5d6;
+  --ink-2: #d6cebc;
+  --muted-ink: #b5ac98;
+  --muted-2: #a49c88;
+  --rule: #3a352c;
+  --rule-soft: #322e27;
+  --rule-strong: #57503f;
+  --seal: #d07257;
+  --seal-fill: #b04f38;
+
+  --bg: var(--paper);
+  --bg-sidebar: var(--paper-2);
+  --fg: var(--ink);
+  --fg-muted: var(--muted-ink);
+  --border: var(--rule);
+  --accent: var(--seal);
+  --accent-soft: rgba(208, 114, 87, .16);
+  --hover: rgba(255, 255, 255, .05);
+
+  --ed-placeholder: #8d8574;
+  --ed-block-hover: rgba(255, 255, 255, .04);
+  --ed-selection: rgba(208, 114, 87, .22);
+  --ed-menu-active: var(--paper-3);
+  --ed-pop-border: var(--rule);
+  --ed-pop-shadow: 0 12px 32px -18px rgba(0, 0, 0, .8);
+}
+
+body {
+  font-family: var(--sans);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* 阅读字号：设置页可改，作用于阅读态正文 */
+:root {
+  --reader-fs: 16.5px;
+  --reader-lh: 1.95;
+}
+
+html[data-reader-size="s"] {
+  --reader-fs: 15px;
+  --reader-lh: 1.85;
+}
+
+html[data-reader-size="m"] {
+  --reader-fs: 16.5px;
+  --reader-lh: 1.95;
+}
+
+html[data-reader-size="l"] {
+  --reader-fs: 18px;
+  --reader-lh: 2.05;
+}
+
+/* 减少动效：关掉过渡与动画 */
+html[data-motion="off"] *,
+html[data-motion="off"] *::before,
+html[data-motion="off"] *::after {
+  transition: none !important;
+  animation: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* 编辑器落到纸面：字体、字号与行高对齐阅读态，桌面与移动共用同一套。
+   之前这些规则写在移动端媒体查询里，桌面端一直用 BlockNote 默认的
+   Inter 16px + line-height: normal，同一篇文字切一下「编辑」就换了一种字。 */
+.bn-root .bn-editor {
+  font-family: var(--sans);
+  color: var(--ink-2);
+  font-size: var(--reader-fs, 16.5px);
+  line-height: var(--reader-lh, 1.95);
+}
+
+.bn-root .bn-block-content[data-content-type="paragraph"] > div {
+  font-size: var(--reader-fs, 16.5px);
+  line-height: var(--reader-lh, 1.95);
+  letter-spacing: .012em;
+}
+
+.bn-root .bn-block-content[data-content-type="heading"] {
+  font-family: var(--serif);
+  letter-spacing: .04em;
+  color: var(--ink);
+}
+
+.bn-root .bn-block-content[data-content-type="quote"] blockquote {
+  font-family: var(--serif);
+  font-size: calc(var(--reader-fs, 16.5px) * 1.03);
+  line-height: 1.9;
+  letter-spacing: .05em;
+  color: var(--ink);
+  border-left: 2px solid var(--seal);
+  padding-left: 14px;
+}
+
+/* 代码块在编辑态也落到纸面：等宽、小一号、paper-3 底，和阅读态对齐 */
+.bn-root .bn-block-content[data-content-type="codeBlock"] {
+  background: var(--paper-3);
+  padding: 10px 12px;
+}
+
+.bn-root .bn-block-content[data-content-type="codeBlock"] .bn-inline-content,
+.bn-root .bn-block-content[data-content-type="codeBlock"] pre,
+.bn-root .bn-block-content[data-content-type="codeBlock"] code {
+  font-family: var(--mono);
+  font-size: calc(var(--reader-fs, 16.5px) * .76);
+  line-height: 1.8;
+  color: var(--ink-2);
+}
+
+/* 行内代码 */
+.bn-root .bn-inline-content code {
+  font-family: var(--mono);
+  font-size: .92em;
+  padding: 1px 4px;
+  background: var(--paper-3);
+  color: var(--ink-2);
+}
+
+/* 表格：BlockNote 默认是 #ddd 灰线 + 5×10 内距，编辑态也要落到纸面 */
+.bn-root .bn-block-content[data-content-type="table"] table {
+  border-collapse: collapse;
+}
+
+.bn-root .bn-block-content[data-content-type="table"] td,
+.bn-root .bn-block-content[data-content-type="table"] th {
+  padding: 9px 12px;
+  border: 1px solid var(--rule-soft);
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* BlockNote 编辑态只用 td：首行当表头，靠这条重线把它和下面分开 */
+.bn-root .bn-block-content[data-content-type="table"] tr:first-child td {
+  font-family: var(--serif);
+  font-weight: 600;
+  color: var(--ink);
+  border-bottom-color: var(--rule-strong);
+}
+
+.bn-root .bn-placeholder {
+  font-family: var(--sans);
+  color: var(--ed-placeholder);
+}
+
+.bn-root .bn-toolbar,
+.bn-root .bn-suggestion-menu,
+.bn-root .bn-menu-dropdown,
+.bn-root .bn-panel {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+}
+
+/* 斜杠菜单的图标块：BlockNote 默认铺一层 tooltip 冷灰（rgb(239,239,239)），
+   在暖纸底上是一条明显的异物竖带。图标不需要底色，去掉。 */
+.bn-root.bn-container .bn-mt-suggestion-menu-item-section[data-position="left"] {
+  background-color: transparent;
+}
+
+/* 媒体块：编辑态与阅读态同为直角 */
+.bn-root .bn-visual-media,
+.bn-root .bn-block-content[data-content-type="image"] img {
+  border-radius: 0;
+}
+
+/* ------------------------------------------------------------------
+   移动端排版校正
+   1) iOS 聚焦小于 16px 的输入框会强制放大整页 —— 手机上把所有可输入控件提到 16px
+   2) Android 基本没有中文衬线字，标题会退成"中文黑体 + 数字宋体"，所以窄屏把 --serif
+      的首选改成 iOS 宋体，其余落到无衬线，保证一条标题只用一种字
+   3) text-size-adjust 设 100%，避免横竖屏切换时系统二次放大
+   ------------------------------------------------------------------ */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --serif: "Songti SC", "Noto Serif CJK SC", "Noto Serif SC", "Source Han Serif SC",
+      "PingFang SC", "Noto Sans CJK SC", "HarmonyOS Sans SC", "Microsoft YaHei", sans-serif;
+    --mono: ui-monospace, "SF Mono", "Roboto Mono", "Noto Sans Mono", Menlo, Consolas, monospace;
+  }
+
+  /* 阅读字号由 html[data-reader-size] 决定，优先级比 :root 高，
+     所以窄屏要在同一层覆盖：字号 +0.5、行距收紧一点 */
+  html[data-reader-size="s"] {
+    --reader-fs: 15.5px;
+    --reader-lh: 1.8;
+  }
+
+  html[data-reader-size="m"] {
+    --reader-fs: 17px;
+    --reader-lh: 1.88;
+  }
+
+  html[data-reader-size="l"] {
+    --reader-fs: 18.5px;
+    --reader-lh: 1.95;
+  }
+
+  /* 可输入控件统一 16px：低于它 iOS 会在聚焦时缩放页面 */
+  /* 用 !important：组件里普遍写了 9–11px 的等宽小字，类选择器优先级更高 */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+    font-family: var(--sans) !important;
+  }
+
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 触屏没有悬停，避免整块段落被“按住”的底色 */
+  .bn-root .bn-block-outer:hover,
+  .bn-root .bn-block-outer:hover .bn-block-content {
+    background-color: transparent;
+  }
+}
+
+/* 编辑态里的链接：默认是浏览器蓝，和纸面不搭 */
+.bn-root .bn-inline-content a {
+  color: var(--seal);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--seal) 38%, transparent);
+  text-underline-offset: 3px;
+}
+
+.bn-root .bn-inline-content a:hover {
+  text-decoration-color: var(--seal);
+}
+
+/* ---------- 表格：允许横向滚动，但只允许一条 ---------- */
+/* 结构是 .tableWrapper > .tableWrapper-inner > table 三层，默认谁都不滚，
+   一旦表格比列宽就三层各自溢出。这里把滚动收拢到最外层，其余两层强制不滚。 */
+.bn-root .bn-block-content[data-content-type="table"] {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.bn-root .bn-block-content[data-content-type="table"] .tableWrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  /* 滚动条出现/消失不改变高度，避免浮钮跟着抖 */
+  scrollbar-gutter: stable;
+}
+
+.bn-root .bn-block-content[data-content-type="table"] .tableWrapper-inner,
+.bn-root .bn-block-content[data-content-type="table"] table {
+  overflow: visible !important;
+}
+
+/* 单元格内容过长时换行，避免把列越撑越宽 */
+.bn-root .bn-block-content[data-content-type="table"] td,
+.bn-root .bn-block-content[data-content-type="table"] th {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* 编辑器内容列允许收缩，否则表格内联宽度会顶宽整页 */
+.bn-root .bn-editor {
+  min-width: 0;
+}
+/* ---------- 屏蔽 BlockNote 自带的表格浮钮 ---------- */
+/* 它们渲染在滚动容器内部，宽表/长表时会跟着内容滚出可视区（还会和左侧菜单重复）。
+   表格的增删行列改由左上角的常驻工具条负责。 */
+.bn-root .bn-block-content[data-content-type="table"] .table-widgets-container,
+.bn-root .bn-block-content[data-content-type="table"] .bn-table-handle,
+.bn-root .bn-block-content[data-content-type="table"] .bn-extend-button,
+.bn-root .bn-block-content[data-content-type="table"] .bn-table-cell-handle {
+  display: none !important;
+}
+
+/* 给上方工具条留出位置，避免压住表格第一行 */
+.bn-root .bn-block-content[data-content-type="table"] .tableWrapper {
+  padding-top: 24px;
+}
+
+/* 表格手柄/加行列按钮有一部分被 BlockNote portal 到了 body，
+   作用域选择器压不住，这里全局收口（这些 class 只用于表格）。 */
+.bn-table-handle,
+.bn-extend-button,
+.bn-table-cell-handle,
+.table-widgets-container,
+.column-resize-handle .bn-table-handle {
+  display: none !important;
+}
+
+/* 表格选区与列宽拖拽线：BlockNote 默认是淡蓝，换成纸面的印章色 */
+.bn-root .selectedCell::after {
+  background: color-mix(in srgb, var(--seal) 14%, transparent) !important;
+}
+
+.bn-root .column-resize-handle {
+  background: var(--seal) !important;
+  width: 2px;
+}
+
+/* ---------- 分享：打印成 PDF ---------- */
+@media print {
+  html.sparrow-printing body > *:not(.sparrow-print-holder) {
+    display: none !important;
+  }
+
+  html.sparrow-printing .sparrow-print-holder {
+    display: block !important;
+    padding: 0 14mm;
+    background: #fff;
+  }
+
+  /* 打印稿不要阴影和悬停底色 */
+  html.sparrow-printing .sparrow-print-holder * {
+    box-shadow: none !important;
+    background-image: none !important;
+  }
+}
+
+/* ---------- 打印：分页与断行控制 ---------- */
+@media print {
+  html.sparrow-printing .sparrow-print-holder {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* 图片、表格行、引用块尽量不跨页 */
+  html.sparrow-printing .sparrow-print-holder img,
+  html.sparrow-printing .sparrow-print-holder figure,
+  html.sparrow-printing .sparrow-print-holder tr,
+  html.sparrow-printing .sparrow-print-holder blockquote,
+  html.sparrow-printing .sparrow-print-holder pre {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  html.sparrow-printing .sparrow-print-holder h1,
+  html.sparrow-printing .sparrow-print-holder h2,
+  html.sparrow-printing .sparrow-print-holder h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* 打印稿不要交互控件 */
+  html.sparrow-printing .sparrow-print-holder button,
+  html.sparrow-printing .sparrow-print-holder [aria-hidden="true"] {
+    display: none !important;
+  }
+}

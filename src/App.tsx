@@ -1,67 +1,72 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { deleteNote, isTauri, listNotes, putNote, type NoteDoc } from "./db/notes";
-import { NoteEditor } from "./editor/NoteEditor";
-import { SummaryView } from "./SummaryView";
-import { ProfileView } from "./ProfileView";
-import { TimelineView } from "./TimelineView";
-import { Sidebar } from "./components/Sidebar";
-import { NoteList } from "./components/NoteList";
+import { isTauri, type NoteDoc } from "./db/notes";
+import { useAnniversaryReminders } from "./lib/useAnniversaryReminders";
+import { useDeskPrefs, useNarrowViewport, useSaveIndicator } from "./app/useDeskPrefs";
+import { useShareActions } from "./app/useShareActions";
+import { useNoteWorkspace } from "./app/useNoteWorkspace";
+import { LoadFail } from "./app/LoadFail";
+import { MainPane } from "./app/MainPane";
+import { MobileTopbar } from "./app/MobileTopbar";
+import { NavRail } from "./components/NavRail";
+import { ListColumn } from "./components/ListColumn";
+import { Viewbar } from "./components/Viewbar";
 import { BottomTabs } from "./components/BottomTabs";
 import { NoteDrawer } from "./components/NoteDrawer";
 import { CommandPalette } from "./components/CommandPalette";
-import { noteMatchesQuery } from "./lib/aggregate";
+import { UndoToast } from "./components/UndoToast";
 import type { NavView } from "./lib/nav";
-import { noteHash, parseNoteHash } from "./lib/nav";
+import { getSettings } from "./lib/settings";
 import { nextThemePref, resolveDark, setThemePref, useThemePref } from "./lib/theme";
-import {
-  CardIcon,
-  ChevronLeftIcon,
-  ListIcon,
-  MenuIcon,
-  MoreIcon,
-  SearchIcon,
-} from "./ui/icons";
 import s from "./App.module.css";
 
-function today(): string {
-  const d = new Date();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${day}`;
-}
-
-function newNote(): NoteDoc {
-  return {
-    id: crypto.randomUUID(),
-    title: "",
-    date: today(),
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    blocks: [],
-  };
-}
-
 export default function App() {
-  const [notes, setNotes] = useState<NoteDoc[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  useAnniversaryReminders();
+  const ws = useNoteWorkspace();
+  const {
+    notes,
+    activeId,
+    active,
+    loaded,
+    loadError,
+    loadNotes,
+    reloadNotes,
+    selectNote,
+    clearSelection,
+    createNote,
+    deleteNote: removeNote,
+    saveFailure,
+    retrySave,
+    dismissSaveFailure,
+    undoDelete,
+    undoDeleteNote: restoreDeletedNote,
+    dismissUndo,
+    toggleChecklistItem,
+    changeTitle,
+    changeBlocks,
+    updateNote,
+    visibleNotes: filterVisibleNotes,
+    sorted,
+    prevNote,
+    nextNote,
+    noteNumber,
+  } = ws;
   const [view, setView] = useState<NavView>("timeline");
   const [query, setQuery] = useState("");
+  /** 日期筛选：点热力格/日历选中的那一天，空串表示不筛选。
+      与搜索词 query 各自独立，列表里两者同时生效（AND）。 */
+  const [dateFilter, setDateFilter] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [listMode, setListMode] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profilePage, setProfilePage] = useState<"settings" | "personalize" | "permissions" | "about" | null>(null);
+  const { navOn, listOn, locked, setNavOn, setListOn, setLocked } = useDeskPrefs();
+  const [readMode, setReadMode] = useState(true);
   const themePref = useThemePref();
   const dateInputRef = useRef<HTMLInputElement>(null);
-  const pushedRef = useRef(false);
-  const notesRef = useRef(notes);
-  notesRef.current = notes;
 
-  const [isNarrow, setIsNarrow] = useState(
-    () => window.matchMedia("(max-width: 768px)").matches,
-  );
+  const isNarrow = useNarrowViewport();
 
   useEffect(() => {
     const apply = () => {
@@ -74,43 +79,129 @@ export default function App() {
     return () => mq.removeEventListener("change", apply);
   }, [themePref]);
 
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 768px)");
-    const onChange = () => setIsNarrow(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  const bootRef = useRef(false);
-  useEffect(() => {
-    if (bootRef.current) return;
-    bootRef.current = true;
-    listNotes().then((all) => {
-      setNotes(all);
-      const fromHash = parseNoteHash(window.location.hash);
-      setActiveId(fromHash && all.some((n) => n.id === fromHash) ? fromHash : null);
-      setLoaded(true);
-    });
-  }, []);
-
-  useEffect(() => {
-    const sync = () => {
-      const id = parseNoteHash(window.location.hash);
-      const valid = id !== null && notesRef.current.some((n) => n.id === id);
-      if (id !== null && !valid) {
-        window.history.replaceState(
-          null,
-          "",
-          window.location.pathname + window.location.search,
-        );
-      }
-      setActiveId(valid ? id : null);
+  // —— 视图与面板的联动留在 App；笔记本身由 useNoteWorkspace 管 ——
+  const openNote = useCallback(
+    (id: string) => {
+      const note = notes.find((n) => n.id === id);
+      setReadMode(
+        Boolean(note && note.blocks.length > 0 && getSettings().defaultNoteMode === "read"),
+      );
+      setProfilePage(null);
+      selectNote(id);
+      setDrawerOpen(false);
+      setPaletteOpen(false);
       setMenuOpen(false);
-    };
-    window.addEventListener("popstate", sync);
-    return () => window.removeEventListener("popstate", sync);
+    },
+    [notes, selectNote],
+  );
+
+  const closeNote = useCallback(() => {
+    clearSelection();
+  }, [clearSelection]);
+
+  const navigate = useCallback(
+    (v: NavView) => {
+      closeNote();
+      setProfilePage(null);
+      setView(v);
+      setDrawerOpen(false);
+      setMenuOpen(false);
+    },
+    [closeNote],
+  );
+
+  const handleCreate = useCallback(() => {
+    createNote((id) => {
+      // 新写的这条是今天的，留着旧筛选会把它挡在时间线外面
+      setQuery("");
+      setDateFilter("");
+      openNote(id);
+    });
+  }, [createNote, openNote]);
+
+  /** 删除：可逆操作，先删 + 5 秒撤销（详见 useNoteWorkspace 注释） */
+  const handleDelete = useCallback(
+    (id: string) => {
+      removeNote(id, (fallbackId) => {
+        if (fallbackId) {
+          openNote(fallbackId);
+        } else {
+          // 删空了：补一条新的，避免整屏空白
+          createNote((newId) => openNote(newId));
+        }
+      });
+    },
+    [removeNote, openNote, createNote],
+  );
+
+  const undoDeleteNote = useCallback(() => {
+    restoreDeletedNote((id) => openNote(id));
+  }, [restoreDeletedNote, openNote]);
+
+  const cycleTheme = useCallback(() => {
+    setThemePref(nextThemePref(themePref));
+  }, [themePref]);
+
+  const toggleTheme = useCallback(() => {
+    setThemePref(resolveDark(themePref) ? "light" : "dark");
+  }, [themePref]);
+
+  // 选日期只写日期筛选，不碰搜索词：两者是两件事
+  const pickDate = useCallback((date: string) => {
+    setDateFilter(date);
+    setView("timeline");
+    setDrawerOpen(false);
   }, []);
 
+  // 原生 date 控件只负责弹出选择器；显示交给上方按钮
+  const openDatePicker = useCallback(() => {
+    const el = dateInputRef.current;
+    if (!el) return;
+    if (typeof el.showPicker === "function") {
+      try {
+        el.showPicker();
+        return;
+      } catch {
+        // 浏览器拒绝（未获得用户激活等）时退回聚焦
+      }
+    }
+    el.focus();
+  }, []);
+
+  const { saveState, markSave } = useSaveIndicator();
+  const { shareMarkdown, shareMarkdownZip, sharePdf, sharePng, sharePrint, shareHint } =
+    useShareActions(active);
+
+  /** 清单页勾一项：和正文编辑同一条保存链路 */
+  const handleToggleChecklist = useCallback(
+    (entry: Parameters<typeof toggleChecklistItem>[0]) => {
+      toggleChecklistItem(entry, markSave);
+    },
+    [toggleChecklistItem, markSave],
+  );
+
+  const handleTitleChange = useCallback(
+    (nextTitle: string) => {
+      changeTitle(nextTitle, markSave);
+    },
+    [changeTitle, markSave],
+  );
+
+  const handleBlocksChange = useCallback(
+    (blocks: NoteDoc["blocks"]) => {
+      changeBlocks(blocks, markSave);
+    },
+    [changeBlocks, markSave],
+  );
+
+  const visibleNotes = useMemo(
+    () => filterVisibleNotes(query, dateFilter),
+    [filterVisibleNotes, query, dateFilter],
+  );
+  // 目录栏收起来时，空态里补一份最近几篇，避免整屏只有一枚印章
+  const recent = useMemo(() => (listOn ? [] : sorted.slice(0, 6)), [listOn, sorted]);
+
+  // 全局快捷键：⌘/Ctrl+K 命令面板、Esc 收面板、（dev）F12 开发者工具
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -122,7 +213,11 @@ export default function App() {
         setPaletteOpen(false);
         setDrawerOpen(false);
       }
-      if (isTauri() && (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "i"))) {
+      if (
+        import.meta.env.DEV &&
+        isTauri() &&
+        (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "i"))
+      ) {
         e.preventDefault();
         void invoke("plugin:webview|internal_toggle_devtools", {
           label: getCurrentWindow().label,
@@ -133,121 +228,14 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const active = activeId ? notes.find((n) => n.id === activeId) ?? null : null;
-  const editing = active !== null;
-
-  const visibleNotes = useMemo(
-    () => notes.filter((n) => noteMatchesQuery(n, query)),
-    [notes, query],
-  );
-
-  const openNote = useCallback((id: string) => {
-    const target = noteHash(id);
-    if (window.location.hash !== target) {
-      window.history.pushState(null, "", target);
-      pushedRef.current = true;
-    }
-    setActiveId(id);
-    setDrawerOpen(false);
-    setPaletteOpen(false);
-    setMenuOpen(false);
-  }, []);
-
-  const closeNote = useCallback(() => {
-    if (pushedRef.current) {
-      pushedRef.current = false;
-      window.history.back();
-      return;
-    }
-    window.history.replaceState(
-      null,
-      "",
-      window.location.pathname + window.location.search,
-    );
-    setActiveId(null);
-  }, []);
-
-  const navigate = useCallback((v: NavView) => {
-    closeNote();
-    setView(v);
-    setDrawerOpen(false);
-    setMenuOpen(false);
-  }, [closeNote]);
-
-  const handleCreate = useCallback(() => {
-    const note = newNote();
-    putNote(note).then(() => {
-      setNotes((prev) => [note, ...prev]);
-      setQuery("");
-      openNote(note.id);
-    });
-  }, [openNote]);
-
-  const handleDelete = useCallback(
-    (id: string) => {
-      deleteNote(id).then(() => {
-        const next = notesRef.current.filter((n) => n.id !== id);
-        setNotes(next);
-        if (activeId !== id) return;
-        if (next.length > 0) {
-          openNote(next[0].id);
-        } else {
-          const note = newNote();
-          putNote(note).then(() => {
-            setNotes([note]);
-            openNote(note.id);
-          });
-        }
-      });
-    },
-    [activeId, openNote],
-  );
-
-  const handleTitleChange = useCallback(
-    (title: string) => {
-      if (!active) return;
-      const updated = { ...active, title, updatedAt: Date.now() };
-      putNote(updated);
-      setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
-    },
-    [active],
-  );
-
-  const handleBlocksChange = useCallback(
-    (blocks: NoteDoc["blocks"]) => {
-      if (!active) return;
-      const updated = { ...active, blocks, updatedAt: Date.now() };
-      putNote(updated);
-      setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
-    },
-    [active],
-  );
-
-  const reloadNotes = useCallback(() => {
-    listNotes().then((all) => {
-      setNotes(all);
-      setActiveId(null);
-      pushedRef.current = false;
-      window.history.replaceState(
-        null,
-        "",
-        window.location.pathname + window.location.search,
-      );
-    });
-  }, []);
-
-  const cycleTheme = useCallback(() => {
-    setThemePref(nextThemePref(themePref));
-  }, [themePref]);
-
-  const pickDate = useCallback((date: string) => {
-    setQuery(date);
-    setListMode(true);
-    setView("timeline");
-    setDrawerOpen(false);
-  }, []);
-
   if (!loaded) return <div className={s.loading}>加载中…</div>;
+
+  // 读库失败：给原因 + 重试，别让界面停在空白
+  if (loadError) {
+    return <LoadFail error={loadError} onRetry={() => void loadNotes()} />;
+  }
+
+  const editing = active !== null;
 
   const title = editing
     ? active?.title || "无标题"
@@ -257,180 +245,184 @@ export default function App() {
         ? "我的"
         : "时间线";
 
-  return (
-    <div className={s.app}>
-      <Sidebar
-        view={view}
-        activeId={activeId}
-        notes={visibleNotes}
-        query={query}
-        onQueryChange={setQuery}
-        onNavigate={navigate}
-        onOpenNote={openNote}
-        onDeleteNote={handleDelete}
-        onCreate={handleCreate}
-        themePref={themePref}
-        onCycleTheme={cycleTheme}
-      />
-      <div className={s.mainCol}>
-        <header className={s.topbar}>
-          {editing ? (
-            <>
-              <button className={s.btnIcon} onClick={closeNote} aria-label="返回">
-                <ChevronLeftIcon />
-              </button>
-              <span className={s.topbarTitle}>{title}</span>
-              <button
-                className={`${s.btnIcon} ${s.onlyMobile}`}
-                onClick={() => setDrawerOpen(true)}
-                aria-label="菜单"
-              >
-                <MenuIcon />
-              </button>
-              <div className={s.menuWrap}>
-                <button
-                  className={`${s.btnIcon} ${s.onlyMobile}`}
-                  onClick={() => setMenuOpen((v) => !v)}
-                  aria-label="更多操作"
-                >
-                  <MoreIcon />
-                </button>
-                {menuOpen && (
-                  <>
-                    <div className={s.popBackdrop} onClick={() => setMenuOpen(false)} />
-                    <div className={s.popMenu}>
-                      <button
-                        className={s.popItem}
-                        onClick={() => {
-                          dateInputRef.current?.focus();
-                          setMenuOpen(false);
-                        }}
-                      >
-                        改日期
-                      </button>
-                      {active && (
-                        <button
-                          className={`${s.popItem} ${s.popItemDanger}`}
-                          onClick={() => {
-                            handleDelete(active.id);
-                            setMenuOpen(false);
-                          }}
-                        >
-                          删除笔记
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-              <button
-                className={`${s.btnIcon} ${s.onlyDesktop}`}
-                onClick={() => setPaletteOpen(true)}
-                aria-label="搜索"
-              >
-                <SearchIcon />
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                className={`${s.btnIcon} ${s.onlyMobile}`}
-                onClick={() => setDrawerOpen(true)}
-                aria-label="菜单"
-              >
-                <MenuIcon />
-              </button>
-              <span className={s.topbarTitle}>{title}</span>
-              {view === "timeline" && (
-                <button
-                  className={`${s.btnIcon} ${s.onlyMobile}`}
-                  onClick={() => setListMode((v) => !v)}
-                  aria-label={listMode ? "切换到卡片流" : "切换到列表"}
-                  title={listMode ? "卡片流" : "紧凑列表"}
-                >
-                  {listMode ? <CardIcon /> : <ListIcon />}
-                </button>
-              )}
-              <button
-                className={`${s.btnIcon} ${s.onlyDesktop}`}
-                onClick={() => setPaletteOpen(true)}
-                aria-label="搜索"
-              >
-                <SearchIcon />
-              </button>
-            </>
+  const mainContent = (
+    <MainPane
+      active={active}
+      view={view}
+      isNarrow={isNarrow}
+      readMode={readMode}
+      saveState={saveState}
+      shareHint={shareHint}
+      noteNumber={noteNumber}
+      prevNote={prevNote}
+      nextNote={nextNote}
+      listOn={listOn}
+      recent={recent}
+      visibleNotes={visibleNotes}
+      query={query}
+      dateFilter={dateFilter}
+      profilePage={profilePage}
+      dark={resolveDark(themePref)}
+      dateInputRef={dateInputRef}
+      onOpenDatePicker={openDatePicker}
+      onUpdateNote={updateNote}
+      markSave={markSave}
+      onTitleChange={handleTitleChange}
+      onBlocksChange={handleBlocksChange}
+      onOpenNote={openNote}
+      onCreate={handleCreate}
+      onToggleList={setListOn}
+      onQueryChange={setQuery}
+      onDateChange={setDateFilter}
+      onOpenDrawer={() => setDrawerOpen(true)}
+      onProfilePage={setProfilePage}
+      onNavigate={navigate}
+      onToggleChecklist={handleToggleChecklist}
+      onDataCleared={reloadNotes}
+      onToggleTheme={toggleTheme}
+    />
+  );
+
+  if (isNarrow) {
+    return (
+      <div className={s.app}>
+        <div className={s.mainCol}>
+          {editing && (
+            <MobileTopbar
+              active={active}
+              title={title}
+              readMode={readMode}
+              menuOpen={menuOpen}
+              onBack={closeNote}
+              onOpenDrawer={() => setDrawerOpen(true)}
+              onToggleRead={() => setReadMode((v) => !v)}
+              onToggleMenu={() => setMenuOpen((v) => !v)}
+              onCloseMenu={() => setMenuOpen(false)}
+              onOpenDatePicker={openDatePicker}
+              onShareMd={shareMarkdown}
+              onShareMdZip={shareMarkdownZip}
+              onSharePdf={sharePdf}
+              onSharePng={sharePng}
+              onPrint={sharePrint}
+              onDelete={handleDelete}
+            />
           )}
-        </header>
-        <main className={s.main}>
-          {active ? (
-            <div className={s.editorPage} key={active.id}>
-              <div className={s.editorHeader}>
-                <input
-                  className={s.titleInput}
-                  placeholder="无标题"
-                  value={active.title}
-                  onChange={(e) => handleTitleChange(e.target.value)}
-                />
-                <div>
-                  <input
-                    ref={dateInputRef}
-                    className={s.dateInput}
-                    type="date"
-                    value={active.date}
-                    onChange={(e) => {
-                      const updated = { ...active, date: e.target.value, updatedAt: Date.now() };
-                      putNote(updated);
-                      setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
-                    }}
-                  />
-                </div>
-              </div>
-              <NoteEditor initialContent={active.blocks} onChange={handleBlocksChange} />
-            </div>
-          ) : view === "timeline" ? (
-            isNarrow && listMode ? (
-              <div className={s.listMode}>
-                <NoteList
-                  notes={visibleNotes}
-                  activeId={activeId}
-                  query={query}
-                  onQueryChange={setQuery}
-                  onOpenNote={openNote}
-                  onDeleteNote={handleDelete}
-                  onCreate={handleCreate}
-                />
-              </div>
-            ) : (
-              <TimelineView
-                notes={visibleNotes}
-                onOpenNote={openNote}
-                onDeleteNote={handleDelete}
-                onCreate={handleCreate}
-              />
-            )
-          ) : view === "summary" ? (
-            <SummaryView notes={notes} onOpenNote={openNote} />
-          ) : (
-            <ProfileView notes={notes} onDataCleared={reloadNotes} />
-          )}
-        </main>
+          <main className={s.main}>{mainContent}</main>
+        </div>
+
+        {!editing && <BottomTabs view={view} onNavigate={navigate} />}
+        {!editing && view === "timeline" && (
+          <button className={s.fab} onClick={handleCreate} aria-label="新建笔记">
+            写
+          </button>
+        )}
+
+        <NoteDrawer
+          open={drawerOpen}
+          notes={notes}
+          themePref={themePref}
+          onCycleTheme={cycleTheme}
+          onClose={() => setDrawerOpen(false)}
+          onCreate={handleCreate}
+          onOpenSettings={() => navigate("profile")}
+          onPickDate={pickDate}
+          onClearFilter={() => setDateFilter("")}
+        />
+        {undoDelete && (
+          <UndoToast
+            message="已删除这篇笔记"
+            onAction={undoDeleteNote}
+            onDismiss={dismissUndo}
+          />
+        )}
+        {saveFailure && (
+          <UndoToast
+            message={`没存上：${saveFailure.reason}`}
+            actionLabel="重试"
+            onAction={retrySave}
+            onDismiss={dismissSaveFailure}
+          />
+        )}
+        <CommandPalette
+          open={paletteOpen}
+          notes={visibleNotes}
+          query={query}
+          onQueryChange={setQuery}
+          onOpenNote={openNote}
+          onClose={() => setPaletteOpen(false)}
+        />
       </div>
-      {!editing && <BottomTabs view={view} onNavigate={navigate} />}
-      {!editing && view === "timeline" && (
-        <button className={s.fab} onClick={handleCreate} aria-label="新建笔记">
-          ＋
-        </button>
+    );
+  }
+
+  return (
+    <div className={s.desktop}>
+      {navOn && (
+        <NavRail
+          view={view}
+          notes={notes}
+          onNavigate={navigate}
+          onSearch={() => setPaletteOpen(true)}
+          onCreate={handleCreate}
+          dark={resolveDark(themePref)}
+          onToggleTheme={toggleTheme}
+        />
       )}
-      <NoteDrawer
-        open={drawerOpen}
-        notes={notes}
-        themePref={themePref}
-        onCycleTheme={cycleTheme}
-        onClose={() => setDrawerOpen(false)}
-        onCreate={handleCreate}
-        onOpenSettings={() => navigate("profile")}
-        onPickDate={pickDate}
-      />
+
+      {view === "timeline" && listOn && (
+        <ListColumn
+          notes={visibleNotes}
+          activeId={activeId}
+          onOpenNote={openNote}
+          onCreate={handleCreate}
+        />
+      )}
+
+      <div className={s.mainCol}>
+        <Viewbar
+          desk={{
+            navOn,
+            listOn,
+            readMode,
+            locked,
+            showList: view === "timeline",
+            onToggleNav: () => setNavOn((v) => !v),
+            onToggleList: () => setListOn((v) => !v),
+            onToggleRead: () => setReadMode((v) => !v),
+            onToggleLock: () => setLocked((v) => !v),
+          }}
+          dark={resolveDark(themePref)}
+          onToggleTheme={toggleTheme}
+          canDelete={active !== null}
+          onDelete={() => {
+            if (active) handleDelete(active.id);
+          }}
+          share={{
+            onShareMd: shareMarkdown,
+            onShareMdZip: shareMarkdownZip,
+            onSharePdf: sharePdf,
+            onSharePng: sharePng,
+            onPrint: sharePrint,
+          }}
+        />
+        <main className={s.main}>{mainContent}</main>
+      </div>
+
+      {undoDelete && (
+        <UndoToast
+          message="已删除这篇笔记"
+          onAction={undoDeleteNote}
+          onDismiss={dismissUndo}
+        />
+      )}
+      {saveFailure && (
+        <UndoToast
+          message={`没存上：${saveFailure.reason}`}
+          actionLabel="重试"
+          onAction={retrySave}
+          onDismiss={dismissSaveFailure}
+        />
+      )}
       <CommandPalette
         open={paletteOpen}
         notes={visibleNotes}

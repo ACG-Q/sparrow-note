@@ -5,14 +5,17 @@
   min-width: 0;
 }
 
+/* 心情标记：印章字，点击换一个 */
 .emoji {
-  font-size: 22px;
+  font-family: var(--serif);
+  font-size: 20px;
+  line-height: 1;
+  color: var(--seal);
   border: none;
   background: transparent;
   cursor: pointer;
   padding: 2px 6px;
-  border-radius: 6px;
-  line-height: 1;
+  border-radius: 0;
 }
 
 .emoji:hover {
@@ -24,31 +27,95 @@
   min-width: 120px;
 }
 
+/* 浮层里的心情表：外框由 FloatingPanel 提供，选中用印章色内描边 */
 .picker {
-  position: absolute;
-  left: 0;
-  top: 100%;
-  z-index: 30;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 2px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .pickerBtn {
   border: none;
   background: transparent;
-  font-size: 18px;
-  padding: 4px;
-  border-radius: 6px;
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1;
+  padding: 7px 0;
+  border-radius: 0;
   cursor: pointer;
+  color: var(--ink-2);
 }
 
-.pickerBtn:hover,
-.pickerActive {
+.pickerBtn:hover {
   background: var(--hover);
+}
+
+.pickerActive {
+  background: var(--paper-3);
+  color: var(--seal);
+  box-shadow: inset 0 0 0 1px var(--seal);
+}
+
+/* ---------- 心情选择面板 ---------- */
+.pickerWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px;
+  min-width: 240px;
+}
+
+.pickerHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.pickerTitle {
+  font-family: var(--serif);
+  font-size: 13.5px;
+  letter-spacing: .04em;
+  color: var(--ink);
+}
+
+.pickerNow {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--seal);
+}
+
+.pickerClose {
+  margin-left: auto;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted-2);
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.pickerClose:hover {
+  border-color: var(--rule);
+  color: var(--seal);
+}
+
+.picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.pickerHint {
+  margin: 0;
+  padding-top: 6px;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 11.5px;
+  color: var(--muted-2);
 }
