@@ -40,3 +40,4 @@ debug = false
 # 把插件放进项目里编译，写入就发生在项目目录内。
 [patch.crates-io]
 tauri-plugin-geolocation = { path = "vendor/tauri-plugin-geolocation" }
+tauri-plugin-notification = { path = "vendor/tauri-plugin-notification" }
