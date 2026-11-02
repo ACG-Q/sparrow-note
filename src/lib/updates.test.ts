@@ -1,4 +1,4 @@
-﻿// @vitest-environment happy-dom
+// @vitest-environment happy-dom
 import { describe, expect, it } from "vitest";
 import { compareVersions } from "./appInfo";
 import { parseManifest, shouldAutoCheck } from "./updates";

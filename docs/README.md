@@ -1,4 +1,4 @@
-﻿# 麻雀记（Sparrow Diary）· 文档中心
+# 麻雀记（Sparrow Diary）· 文档中心
 
 跨平台、本地优先的日记 / 生活记录应用。Tauri 2 + React 19 + TypeScript，桌面（Windows / macOS / Linux）
 与移动端（Android / iOS）共用一套前端，桌面落 SQLite、浏览器落 IndexedDB。

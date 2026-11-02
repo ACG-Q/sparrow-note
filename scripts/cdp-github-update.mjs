@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 /**
  * CDP 验收脚本：关于页的 GitHub 更新源。
  *

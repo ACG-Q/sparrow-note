@@ -1,4 +1,4 @@
-﻿import { setThemePref, useThemePref, type ThemePref } from "./lib/theme";
+import { setThemePref, useThemePref, type ThemePref } from "./lib/theme";
 import {
   allSummaryKinds,
   moveSummaryKind,

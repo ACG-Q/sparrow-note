@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { APP_NAME, appVersion } from "./lib/appInfo";
 import { currentPlatform, platformLabel } from "./lib/platform";
 import {

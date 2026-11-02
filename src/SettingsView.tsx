@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { NoteDoc } from "./db/notes";
 import { clearAllNotes, putNote } from "./db/notes";
 import { setSetting, useSettings } from "./lib/settings";
