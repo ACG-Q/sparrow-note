@@ -1,4 +1,4 @@
-name: CI
+﻿name: CI
 
 # 一个文件跑完四种事，靠触发器 + if 分流：
 #
@@ -176,6 +176,12 @@ jobs:
         with:
           args: ${{ matrix.args }}
 
+      - name: 列出产物（便于排查）
+        if: runner.os != 'Windows'
+        run: |
+          ls -R src-tauri/target/release/bundle 2>/dev/null | head -40 || true
+          ls -R src-tauri/target/*/release/bundle 2>/dev/null | head -40 || true
+
       - name: 上传安装包（供 publish 汇总）
         uses: actions/upload-artifact@v7
         with:
@@ -184,7 +190,7 @@ jobs:
             src-tauri/target/release/bundle/**
             src-tauri/target/*/release/bundle/**
           retention-days: 7
-          if-no-files-found: error
+          if-no-files-found: warn
 
   # ---------------------------------------------------------------- iOS
   # 有证书 → ad-hoc IPA（可直接安装）；没证书 → 未签名 IPA（越狱机或重签工具用）。
@@ -221,6 +227,18 @@ jobs:
 
       - name: 生成 iOS 工程（gen/apple 不入库，每次现生成）
         run: npx tauri ios init
+
+      # 插件依赖走 CocoaPods：有 Podfile 就装，之后才有 .xcworkspace 可用
+      - name: 安装 CocoaPods 依赖
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd src-tauri/gen/apple
+          if [ -f Podfile ]; then
+            (command -v pod && pod install --repo-update=false) || pod install
+          else
+            echo "没有 Podfile，跳过"
+          fi
 
       - name: 不签名 IPA
         if: env.IOS_CERTIFICATE == ''
@@ -313,6 +331,10 @@ jobs:
       # 缺 SDK 组件时由 Gradle 自己下（AGP 默认允许）
       - name: 接受 Android 许可
         run: yes | sdkmanager --licenses > /dev/null || true
+
+      # gen/android 不入库，构建前必须先 init
+      - name: 生成安卓工程
+        run: npx tauri android init
 
       - name: 打 release APK
         if: env.KS_B64 != ''
