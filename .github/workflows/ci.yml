@@ -228,14 +228,24 @@ jobs:
       - name: 生成 iOS 工程（gen/apple 不入库，每次现生成）
         run: npx tauri ios init
 
-      # 插件依赖走 CocoaPods：有 Podfile 就装，之后才有 .xcworkspace 可用
-      - name: 安装 CocoaPods 依赖
+      # 插件依赖走 CocoaPods（每个 tauri 插件都带 podspec），之后才有 .xcworkspace 可用。
+      # macos 镜像不一定预装 pod，缺就现装。
+      - name: 装 CocoaPods
+        shell: bash
+        run: |
+          set -euxo pipefail
+          if ! command -v pod >/dev/null 2>&1; then
+            gem install cocoapods --no-document
+          fi
+          pod --version
+
+      - name: 安装 Pod 依赖
         shell: bash
         run: |
           set -euxo pipefail
           cd src-tauri/gen/apple
           if [ -f Podfile ]; then
-            (command -v pod && pod install --repo-update=false) || pod install
+            pod install
           else
             echo "没有 Podfile，跳过"
           fi
@@ -384,7 +394,8 @@ jobs:
   # 这样 Release 的名字、说明、prerelease 判断只有一处，也不会有几个 job 抢着建 Release。
   publish:
     name: 发布 · 汇总所有安装包
-    if: startsWith(github.ref, 'refs/tags/v')
+    # 用 always()：某个端挂了也把已经打好的包发出去，总比一个 Release 都没有强
+    if: always() && startsWith(github.ref, 'refs/tags/v')
     needs: [desktop, ios, android]
     runs-on: ubuntu-latest
     steps:
@@ -410,7 +421,15 @@ jobs:
       - name: 清点产物
         run: |
           find assets -type f | sort
-          echo "文件数：$(find assets -type f | wc -l)"
+          n=$(find assets -type f | wc -l)
+          echo "文件数：$n"
+          if [ "$n" -eq 0 ]; then
+            echo "::error::一个安装包都没打出来，不发 Release"
+            exit 1
+          fi
+          if ! ls assets/*.ipa >/dev/null 2>&1; then
+            echo "::warning::没有 iOS 包（iOS job 失败或没配签名），这次 Release 只有桌面/安卓"
+          fi
 
       - name: 发到 Release
         uses: softprops/action-gh-release@v3
@@ -429,5 +448,6 @@ jobs:
             装好后打开「我的 → 关于 → 检查更新」就能收到新版本。
           files: assets/**
           draft: false
+          fail_on_unmatched_files: false
           prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
           fail_on_unmatched_files: true
