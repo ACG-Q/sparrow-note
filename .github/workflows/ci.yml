@@ -126,16 +126,20 @@ jobs:
             os: windows-latest
             args: ""
             rustTargets: ""
+            # 产物目录（CI 日志里确认过的真实路径前缀）
+            bundleDir: src-tauri/target/release/bundle
           - label: macOS Apple Silicon
             slug: macos-arm64
             os: macos-latest
             args: "--target aarch64-apple-darwin"
             rustTargets: "aarch64-apple-darwin"
+            bundleDir: src-tauri/target/aarch64-apple-darwin/release/bundle
           - label: Linux x64
             slug: linux-x64
             os: ubuntu-22.04
             args: ""
             rustTargets: ""
+            bundleDir: src-tauri/target/release/bundle
     steps:
       - uses: actions/checkout@v7
 
@@ -176,31 +180,31 @@ jobs:
         with:
           args: ${{ matrix.args }}
 
-      # 不用通配符交给 upload-artifact 猜（Windows 能匹配、Linux/macOS 之前一个都没进去）。
-      # 直接找真正的安装包文件、复制到一个平坦目录再上传。
-      # 注意：cargo 的 target 目录里有软链/无权限项，find 可能返回非零，所以这里不开 -e，
-      # 只按“最后收到几个文件”判断成败。
+      # 按各平台真实的产物子目录取文件（upload-artifact 的通配符在 Linux/macOS 上一个都没匹配到，
+      # 三个平台的包装不出来就是这个原因）：
+      #   Windows: <bundle>/nsis/*.exe、<bundle>/msi/*.msi
+      #   macOS:   <bundle>/dmg/*.dmg（macos/*.app.tar.gz 是更新器产物，不发）
+      #   Linux:   <bundle>/deb/*.deb、<bundle>/rpm/*.rpm、<bundle>/appimage/*.AppImage
       - name: 收集安装包
         shell: bash
         run: |
           set -uo pipefail
-          rm -rf out
-          mkdir -p out
-          find src-tauri/target -type f \
-            \( -name "*.exe" -o -name "*.msi" -o -name "*.dmg" \
-               -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) \
-            -print 2>/dev/null | while IFS= read -r f; do
-              base="$(basename "$f")"
-              if [ ! -e "out/$base" ]; then
-                cp -- "$f" "out/$base" && echo "copied $base"
-              fi
+          rm -rf out && mkdir -p out
+          B="${{ matrix.bundleDir }}"
+          shopt -s nullglob
+          for pat in nsis/*.exe msi/*.msi dmg/*.dmg deb/*.deb rpm/*.rpm appimage/*.AppImage; do
+            for f in "$B"/$pat; do
+              [ -f "$f" ] && cp -v -- "$f" out/
             done
+          done
+          shopt -u nullglob
           echo "---- out ----"
           ls -lh out || true
           n=$(ls -1 out 2>/dev/null | wc -l | tr -d ' ')
           echo "文件数：$n"
           if [ "$n" -eq 0 ]; then
-            echo "::error::没找到安装包（tauri build 的产物路径变了？）"
+            echo "::error::在 $B 下没找到安装包"
+            ls -R "$B" 2>/dev/null || true
             exit 1
           fi
 
