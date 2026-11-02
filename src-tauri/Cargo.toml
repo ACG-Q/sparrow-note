@@ -1,6 +1,6 @@
 [package]
 name = "sparrow-note"
-version = "0.1.0"
+version = "0.0.2"
 description = "麻雀记 - 日记与生活记录"
 edition = "2024"
 rust-version = "1.90"

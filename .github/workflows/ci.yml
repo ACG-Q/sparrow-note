@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 # 一个文件跑完四种事，靠触发器 + if 分流：
 #
@@ -176,21 +176,32 @@ jobs:
         with:
           args: ${{ matrix.args }}
 
-      - name: 列出产物（便于排查）
-        if: runner.os != 'Windows'
+      # 不用通配符交给 upload-artifact 猜（Windows 能匹配、Linux/macOS 之前一个都没进去）。
+      # 直接找出真正的安装包文件、复制到一个平坦目录，再上传这个目录——路径对了就是对的。
+      - name: 收集安装包
+        shell: bash
         run: |
-          ls -R src-tauri/target/release/bundle 2>/dev/null | head -40 || true
-          ls -R src-tauri/target/*/release/bundle 2>/dev/null | head -40 || true
+          set -euxo pipefail
+          mkdir -p out
+          find src-tauri/target -type f \
+            \( -name "*.exe" -o -name "*.msi" -o -name "*.dmg" -o -name "*.AppImage" \
+               -o -name "*.deb" -o -name "*.rpm" -o -name "*.tar.gz" \) \
+            -exec cp -v {} out/ \;
+          echo "---- out ----"
+          ls -lh out
+          n=$(find out -type f | wc -l)
+          if [ "$n" -eq 0 ]; then
+            echo "::error::没有找到任何安装包（检查 tauri build 的产物路径）"
+            exit 1
+          fi
 
       - name: 上传安装包（供 publish 汇总）
         uses: actions/upload-artifact@v7
         with:
           name: desktop-${{ matrix.slug }}
-          path: |
-            src-tauri/target/release/bundle/**
-            src-tauri/target/*/release/bundle/**
+          path: out/**
           retention-days: 7
-          if-no-files-found: warn
+          if-no-files-found: error
 
   # ---------------------------------------------------------------- iOS
   # 有证书 → ad-hoc IPA（可直接安装）；没证书 → 未签名 IPA（越狱机或重签工具用）。
