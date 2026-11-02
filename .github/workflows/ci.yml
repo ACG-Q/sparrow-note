@@ -448,6 +448,5 @@ jobs:
             装好后打开「我的 → 关于 → 检查更新」就能收到新版本。
           files: assets/**
           draft: false
-          fail_on_unmatched_files: false
           prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
           fail_on_unmatched_files: true
