@@ -49,11 +49,31 @@ vi.mock("../lib/share", () => ({
   noteToMarkdownWithAssets: () => ({ markdown: "# md", assets: [] }),
 }));
 vi.mock("../lib/shareExport", () => ({
-  downloadMarkdownFile: () => { shareCalls.md += 1; },
-  downloadMarkdownZip: () => { shareCalls.zip += 1; },
-  exportNotePdf: async () => { shareCalls.pdf += 1; },
-  exportNodePng: async () => { shareCalls.png += 1; return { count: 2 }; },
-  printNode: () => { shareCalls.print += 1; },
+  downloadMarkdownFile: async () => {
+    shareCalls.md += 1;
+    return { status: "saved", name: "标题.md", via: "browser" };
+  },
+  downloadMarkdownZip: async () => {
+    shareCalls.zip += 1;
+    return { status: "saved", name: "标题.zip", via: "browser" };
+  },
+  exportNotePdf: async () => {
+    shareCalls.pdf += 1;
+    return { status: "saved", name: "标题.pdf", via: "browser" };
+  },
+  exportNodePng: async () => {
+    shareCalls.png += 1;
+    return {
+      count: 2,
+      saves: [
+        { status: "saved", name: "标题.png", via: "browser" },
+        { status: "saved", name: "标题-2.png", via: "browser" },
+      ],
+    };
+  },
+  printNode: () => {
+    shareCalls.print += 1;
+  },
 }));
 
 // 用渲染一个空组件的方式驱动 hook

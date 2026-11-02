@@ -3,6 +3,9 @@ import { DEFAULT_MAP_PROVIDER, type MapProviderId } from "./mapProviders";
 
 export type ReaderSize = "s" | "m" | "l";
 
+/** 自动备份的频率 */
+export type BackupInterval = "launch" | "daily" | "weekly";
+
 /** 汇总页可以聚合哪些块：新增块类型时只加这里一行 */
 export type SummaryKind =
   | "mood"
@@ -32,6 +35,14 @@ export interface Settings {
   reminderHour: number;
   /** 提前几天提醒 */
   reminderWithinDays: number;
+  /** 自动备份（写到应用数据目录的 backups/，浏览器里不可用） */
+  autoBackup: boolean;
+  /** 自动备份频率 */
+  backupInterval: BackupInterval;
+  /** 保留几份自动备份 */
+  backupKeep: number;
+  /** 上一次自动备份的时间戳；从没备过是 null */
+  lastBackupAt: number | null;
 }
 
 const KEY = "sparrow-settings";
@@ -60,6 +71,10 @@ const DEFAULTS: Settings = {
   reminderEnabled: true,
   reminderHour: 9,
   reminderWithinDays: 0,
+  autoBackup: true,
+  backupInterval: "daily",
+  backupKeep: 5,
+  lastBackupAt: null,
 };
 
 function sanitize(parsed: Partial<Settings>): Settings {
@@ -73,6 +88,15 @@ function sanitize(parsed: Partial<Settings>): Settings {
   merged.reminderEnabled = merged.reminderEnabled !== false;
   const lines = Number(merged.codeCollapseLines);
   merged.codeCollapseLines = Number.isFinite(lines) && lines >= 0 ? Math.min(lines, 60) : DEFAULTS.codeCollapseLines;
+
+  merged.autoBackup = merged.autoBackup !== false;
+  if (!["launch", "daily", "weekly"].includes(merged.backupInterval)) {
+    merged.backupInterval = DEFAULTS.backupInterval;
+  }
+  const keep = Number(merged.backupKeep);
+  merged.backupKeep = Number.isFinite(keep) ? Math.min(30, Math.max(1, Math.round(keep))) : DEFAULTS.backupKeep;
+  const last = Number(merged.lastBackupAt);
+  merged.lastBackupAt = Number.isFinite(last) && last > 0 ? last : null;
   return merged;
 }
 

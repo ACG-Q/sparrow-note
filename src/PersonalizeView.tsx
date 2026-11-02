@@ -1,4 +1,4 @@
-import { setThemePref, useThemePref, type ThemePref } from "./lib/theme";
+﻿import { setThemePref, useThemePref, type ThemePref } from "./lib/theme";
 import {
   allSummaryKinds,
   moveSummaryKind,
@@ -8,6 +8,8 @@ import {
   type ReaderSize,
   type SummaryKind,
 } from "./lib/settings";
+import { ProfilePage } from "./app/ProfileShell";
+import { currentPlatform, platformLabel } from "./lib/platform";
 import s from "./SettingsView.module.css";
 
 const THEMES: { key: ThemePref; label: string }[] = [
@@ -64,16 +66,7 @@ export function PersonalizeView({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className={s.page}>
-      <div className={s.phead}>
-        <button type="button" className={s.back} onClick={onBack}>
-          ← 我的
-        </button>
-        <div className={s.pheadRow}>
-          <h1>个性化</h1>
-          <span className={s.pn}>本机</span>
-        </div>
-      </div>
+    <ProfilePage title="个性化" marker={platformLabel(currentPlatform())} onBack={onBack}>
 
       <section className={s.block}>
         <h2 className={s.bh}>外观</h2>
@@ -228,7 +221,7 @@ export function PersonalizeView({ onBack }: { onBack: () => void }) {
           ))}
         </div>
       </section>
-    </div>
+    </ProfilePage>
   );
 }
 

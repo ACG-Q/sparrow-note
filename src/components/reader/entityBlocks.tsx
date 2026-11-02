@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { AccountCard } from "../AccountCard";
 import { AudioPlayer } from "../../editor/blocks/_shared/AudioPlayer";
 import { saveImageAs } from "../../lib/download";
@@ -149,6 +149,30 @@ function Bankcard({
   );
 }
 
+/** 存手绘图的按钮：移动端要过一次「另存为」，得如实显示取消 / 失败 */
+function DrawingSaveButton({ data, name }: { data: string; name: string }): ReactNode {
+  const [state, setState] = useState<"idle" | "saved" | "cancelled" | "failed">("idle");
+
+  const save = async () => {
+    try {
+      const outcome = await saveImageAs(data, name);
+      setState(outcome.status === "saved" ? "saved" : "cancelled");
+    } catch {
+      setState("failed");
+    }
+    window.setTimeout(() => setState("idle"), 1500);
+  };
+
+  const label =
+    state === "saved" ? "已保存" : state === "cancelled" ? "已取消" : state === "failed" ? "保存失败" : "存为图片";
+
+  return (
+    <button type="button" className={s.drawingSave} onClick={() => void save()}>
+      {label}
+    </button>
+  );
+}
+
 /** drawing：手绘图，可全屏预览、可存为图片 */
 function Drawing({
   block,
@@ -173,13 +197,7 @@ function Drawing({
       </button>
       <figcaption className={s.drawingBar}>
         <span className={s.drawingLabel}>手绘</span>
-        <button
-          type="button"
-          className={s.drawingSave}
-          onClick={() => void saveImageAs(data, `手绘-${ctx.noteDate || "note"}.png`)}
-        >
-          存为图片
-        </button>
+        <DrawingSaveButton data={data} name={`手绘-${ctx.noteDate || "note"}.png`} />
       </figcaption>
     </figure>
   );

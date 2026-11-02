@@ -46,6 +46,15 @@ export function isMobile(p: Platform): boolean {
   return p === "android" || p === "ios";
 }
 
+/**
+ * 是不是 Tauri 移动端外壳（安卓 / iOS 的 WebView）。
+ * 这些平台的 WebView 限制最多：`<a download>`、`<input type=file>` 的 MIME 过滤、
+ * `window.confirm` 的按钮文案都和桌面不一样，需要单独走系统能力。
+ */
+export function isTauriMobile(): boolean {
+  return inTauri() && isMobile(currentPlatform());
+}
+
 export function isDesktop(p: Platform): boolean {
   return p === "windows" || p === "macos" || p === "linux";
 }

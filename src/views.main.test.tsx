@@ -55,6 +55,8 @@ const notes = [checklistNote, note("n2", "2026-10-29", "秋日骑行", [para("�
 
 describe("TimelineView", () => {
   it("列出笔记并按日期分组", () => {
+    // 页头显示的是「今天」，跨月就会变：把时钟钉住，断言才不会在月初挂掉
+    vi.useFakeTimers({ now: new Date("2026-10-30T09:00:00") });
     const { container } = render(
       <TimelineView
         notes={notes}
@@ -69,8 +71,11 @@ describe("TimelineView", () => {
         onClearDate={() => {}}
       />,
     );
-    expect(container.textContent).toMatch(/2026 年 10 月|10 月/);
+    expect(container.textContent).toMatch(/2026 年 10 月/);
+    // 分组标题是「十月」，两条笔记都在这组里
+    expect(container.textContent).toContain("十月");
     expect(container.textContent).toContain("秋日骑行");
+    vi.useRealTimers();
   });
 
   it("点笔记回调 onOpenNote", () => {

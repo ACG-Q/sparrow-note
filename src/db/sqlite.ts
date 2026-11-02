@@ -36,6 +36,21 @@ export function getCorruptRowCount(): number {
 }
 
 /**
+ * 把当前库的一致性快照写到 `targetFile`（换存储位置时用）。
+ *
+ * 为什么用 `VACUUM INTO` 而不是复制文件：WAL 模式下最近写入可能还只在 `-wal` 里，
+ * 直接复制会得到一份「少了最后几笔」的库；`VACUUM INTO` 由 SQLite 自己在事务里生成快照。
+ * 目标文件必须不存在，否则 SQLite 会报错（也顺便避免覆盖别人的数据）。
+ */
+export async function vacuumInto(targetFile: string): Promise<void> {
+  const db = await getDb();
+  // 先把 WAL 合并回主库，快照才是完整的
+  await db.execute("PRAGMA wal_checkpoint(FULL)", []);
+  const escaped = targetFile.replace(/'/g, "''");
+  await db.execute(`VACUUM INTO '${escaped}'`, []);
+}
+
+/**
  * 数据库行 → 笔记对象。
  *
  * `blocks` 是 JSON 字符串，历史上出现过写坏/被截断的情况；

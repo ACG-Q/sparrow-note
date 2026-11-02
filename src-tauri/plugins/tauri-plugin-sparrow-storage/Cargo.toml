@@ -1,0 +1,19 @@
+[package]
+name = "tauri-plugin-sparrow-storage"
+version = "0.1.0"
+description = "让安卓也能选数据存放目录：系统文件夹选择 + 全文件访问授权"
+edition = "2021"
+rust-version = "1.90"
+links = "tauri-plugin-sparrow-storage"
+
+[lib]
+name = "tauri_plugin_sparrow_storage"
+path = "src/lib.rs"
+
+[build-dependencies]
+tauri-plugin = { version = "2.7.1", features = ["build"] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2.12.3", default-features = false }

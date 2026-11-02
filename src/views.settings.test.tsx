@@ -17,6 +17,10 @@ const store: Record<string, unknown> = {
   reminderWithinDays: 3,
   showMoodMeta: true,
   theme: "auto",
+  autoBackup: true,
+  backupInterval: "daily",
+  backupKeep: 5,
+  lastBackupAt: null,
 };
 vi.mock("./lib/settings", () => ({
   useSettings: () => store,
@@ -42,6 +46,7 @@ vi.mock("./db/notes", () => ({
   clearAllNotes: () => clearAllNotes(),
   listNotes: async () => [],
   deleteNote: async () => {},
+  isTauri: () => false,
 }));
 
 vi.mock("./db/sqlite", () => ({
@@ -49,14 +54,7 @@ vi.mock("./db/sqlite", () => ({
   rowToNote: () => null,
 }));
 
-vi.mock("./lib/storageInfo", () => ({
-  getStorageInfo: async () => ({
-    backend: "IndexedDB",
-    noteCount: 3,
-    bytes: 2048,
-    location: "浏览器本地",
-  }),
-}));
+// 数据位置/备份在浏览器里走降级分支（isTauri 为 false），不 mock，顺便测降级
 
 vi.mock("./lib/mapProviders", () => ({
   MAP_PROVIDERS: [
@@ -109,13 +107,28 @@ const notes = [
 ];
 
 describe("SettingsView", () => {
-  it("渲染存储信息与各分区", async () => {
+  it("渲染用量、数据库位置、自动备份与地图", async () => {
     const { container } = render(
       <SettingsView notes={notes} onDataCleared={() => {}} onBack={() => {}} />,
     );
-    await waitFor(() => expect(container.textContent).toMatch(/存储|数据|备份/));
-    expect(container.textContent).toMatch(/本机存储|数据库/);
-    expect(container.textContent).toMatch(/损坏|读不出来/);
+    await waitFor(() => expect(container.textContent).toMatch(/数据与存储/));
+    const text = container.textContent || "";
+    expect(text).toMatch(/2 篇笔记/); // 用量
+    expect(text).toMatch(/IndexedDB/); // 浏览器里数据在哪
+    expect(text).toMatch(/自动备份/);
+    expect(text).toMatch(/地图/);
+    expect(text).toMatch(/读不出来/); // 坏记录提示
+  });
+
+  it("浏览器里不提供「更换位置」，并说明原因", async () => {
+    const { container } = render(
+      <SettingsView notes={notes} onDataCleared={() => {}} onBack={() => {}} />,
+    );
+    await waitFor(() => expect(container.textContent).toMatch(/数据与存储/));
+    expect([...container.querySelectorAll("button")].some((b) => /更换位置/.test(b.textContent || ""))).toBe(
+      false,
+    );
+    expect(container.textContent).toMatch(/浏览器托管/);
   });
 
   it("点返回回调 onBack", () => {
@@ -125,16 +138,20 @@ describe("SettingsView", () => {
     expect(onBack).toHaveBeenCalled();
   });
 
-  it("切换开关会写进设置", async () => {
+  it("浏览器里的自动备份开关是禁用的，并写明原因", async () => {
     const { container } = render(
       <SettingsView notes={notes} onDataCleared={() => {}} onBack={() => {}} />,
     );
-    await waitFor(() => expect((container.textContent || "").length).toBeGreaterThan(50));
-    // 设置页用 select/按钮而不是 checkbox，这里点第一个可点控件，确认不崩
-    const controls = [...container.querySelectorAll("button, select, input")];
-    expect(controls.length).toBeGreaterThan(0);
-    if (controls[0]) fireEvent.click(controls[0]);
-    expect((container.textContent || "").length).toBeGreaterThan(50);
+    await waitFor(() => expect(container.textContent).toMatch(/自动备份/));
+    const box = container.querySelector<HTMLButtonElement>(
+      'button[role="checkbox"][aria-label="自动备份"]',
+    );
+    expect(box?.disabled).toBe(true);
+    expect(container.textContent).toMatch(/浏览器里没有可写的本地目录/);
+    // 浏览器里也没有「立即备份」
+    expect([...container.querySelectorAll("button")].some((b) => /立即备份/.test(b.textContent || ""))).toBe(
+      false,
+    );
   });
 });
 

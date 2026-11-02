@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { APP_NAME, appVersion } from "./lib/appInfo";
 import { currentPlatform, platformLabel } from "./lib/platform";
 import {
@@ -12,6 +12,8 @@ import {
   type UpdateSettings,
 } from "./lib/updates";
 import { clearUpdateNotice, setUpdateNotice, useUpdateNotice } from "./lib/updateNotice";
+import { DEFAULT_GITHUB_REPO } from "./lib/repo";
+import { ProfilePage } from "./app/ProfileShell";
 import s from "./SettingsView.module.css";
 
 function fmtTime(ts: number | null): string {
@@ -102,22 +104,11 @@ export function AboutView({ onBack }: { onBack: () => void }) {
             : `检查失败：${result.reason}`;
 
   return (
-    <div className={s.page}>
-      <div className={s.phead}>
-        <button type="button" className={s.back} onClick={onBack}>
-          ← 我的
-        </button>
-        <div className={s.pheadRow}>
-          <h1>关于</h1>
-          <span className={s.pn}>v{version}</span>
-        </div>
-      </div>
-
+    <ProfilePage title="关于" marker={platformLabel(platform)} onBack={onBack}>
       <section className={s.block}>
+        {/* 版本号在页头右上已经有一份，这里不再重复 */}
         <p className={s.about}>
-          <b>
-            {APP_NAME} v{version}
-          </b>
+          <b>{APP_NAME}</b>
           <br />
           本地优先的日记与笔记应用。数据只保存在这台设备上，不经过服务器。
         </p>
@@ -137,7 +128,7 @@ export function AboutView({ onBack }: { onBack: () => void }) {
             </p>
             {notice.date && <span className={s.autoNoticeMeta}>{notice.date}</span>}
             {notice.url ? (
-              <a className={s.autoNoticeLink} href={notice.url} target="_blank" rel="noreferrer">
+              <a className={s.inlineLink} href={notice.url} target="_blank" rel="noreferrer">
                 下载
               </a>
             ) : (
@@ -196,15 +187,28 @@ export function AboutView({ onBack }: { onBack: () => void }) {
               <input
                 className={s.updateInput}
                 value={settings.githubRepo}
-                placeholder="owner/repo，例如 sparrow-note/sparrow"
+                placeholder={DEFAULT_GITHUB_REPO || "owner/repo"}
                 spellCheck={false}
                 autoCapitalize="off"
                 onChange={(e) => patch({ githubRepo: e.target.value })}
               />
             </div>
             <p className={s.permMeta}>
-              只填 <code>owner/repo</code>（也可以直接粘仓库地址）。走 GitHub 公开 API，不需要令牌；
-              未登录额度是每小时 60 次，超了会提示限流。测试通道读的是 prerelease。
+              默认读这个仓库的 Release：换仓库改 <code>package.json</code> 的 <code>repository</code> 一处即可。
+              走 GitHub 公开 API，不需要令牌；未登录额度是每小时 60 次，超了会提示限流。测试通道读的是 prerelease。
+              {settings.githubRepo && (
+                <>
+                  {" "}
+                  <a
+                    className={s.inlineLink}
+                    href={`https://github.com/${settings.githubRepo}/releases`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    打开发布页
+                  </a>
+                </>
+              )}
             </p>
           </>
         ) : (
@@ -220,8 +224,8 @@ export function AboutView({ onBack }: { onBack: () => void }) {
               />
             </div>
             <p className={s.permMeta}>
-              预留接口：填一个返回 <code>{`{ "version": "0.2.0", "notes": "…", "url": "…" }`}</code> 的地址即可。
-              该地址需要允许跨域（CORS）；想换成 GitHub Release，把上面的更新源切过去、填仓库名就行。
+              备用通道：填一个返回 <code>{`{ "version": "0.2.0", "notes": "…", "url": "…" }`}</code> 的地址即可，
+              该地址需要允许跨域（CORS）。日常用仓库发版的话，把上面的更新源切回「GitHub Release」。
             </p>
           </>
         )}
@@ -265,17 +269,17 @@ export function AboutView({ onBack }: { onBack: () => void }) {
 
       <section className={s.block}>
         <h2 className={s.bh}>关于这个应用</h2>
-        <div className={s.row}>
+        <div className={s.rowStack}>
           <span className={s.rowLabel}>数据位置</span>
           <span className={s.permMeta}>
             开发版在程序旁边；打包安装后放在系统的用户数据目录，可在「设置 → 存储」里看到完整路径。
           </span>
         </div>
-        <div className={s.row}>
+        <div className={s.rowStack}>
           <span className={s.rowLabel}>隐私</span>
           <span className={s.permMeta}>没有账号、没有上传；联网只用于地名检索与地图瓦片。</span>
         </div>
-        <div className={s.row}>
+        <div className={s.rowStack}>
           <span className={s.rowLabel}>许可</span>
           <span className={s.permMeta}>个人使用；捆绑的开源组件见下。</span>
         </div>
@@ -284,6 +288,6 @@ export function AboutView({ onBack }: { onBack: () => void }) {
           Shiki（MIT）
         </p>
       </section>
-    </div>
+    </ProfilePage>
   );
 }

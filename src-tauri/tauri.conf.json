@@ -6,8 +6,8 @@
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
+    "beforeDevCommand": "node scripts/android-permissions.mjs && npm run dev",
+    "beforeBuildCommand": "node scripts/android-permissions.mjs && npm run build"
   },
   "app": {
     "withGlobalTauri": false,

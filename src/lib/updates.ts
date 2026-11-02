@@ -1,5 +1,6 @@
 import { compareVersions } from "./appInfo";
 import { inTauri } from "./platform";
+import { DEFAULT_GITHUB_REPO } from "./repo";
 
 /**
  * 更新检测 —— 这里只放"接口 + 一个最小可用实现"，真正的分发服务留口子。
@@ -58,11 +59,15 @@ export type UpdateSettings = {
 
 const KEY = "sparrow-update-settings";
 
+/**
+ * 默认走远程仓库（GitHub Release）：仓库地址来自 `package.json` 的 repository，
+ * 见 `lib/repo.ts`。这样发版之后「检查更新」开箱即用，不用用户自己去填地址。
+ */
 const DEFAULT_SETTINGS: UpdateSettings = {
-  source: "manifest",
+  source: DEFAULT_GITHUB_REPO ? "github" : "manifest",
   channel: "stable",
   endpoint: "",
-  githubRepo: "",
+  githubRepo: DEFAULT_GITHUB_REPO,
   autoCheck: false,
   lastCheckAt: null,
 };
@@ -74,11 +79,19 @@ export function loadUpdateSettings(): UpdateSettings {
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return { ...DEFAULT_SETTINGS };
     const p = parsed as Partial<UpdateSettings>;
+    const endpoint = typeof p.endpoint === "string" ? p.endpoint.trim() : "";
+    const savedRepo = typeof p.githubRepo === "string" ? p.githubRepo.trim() : "";
+    // 从没配置过（老版本默认就是空地址 + 空仓库）→ 用新的默认值，别让用户看到「未配置」
+    const untouched = !endpoint && !savedRepo;
     return {
-      source: typeof p.source === "string" ? p.source : DEFAULT_SETTINGS.source,
+      source: untouched
+        ? DEFAULT_SETTINGS.source
+        : typeof p.source === "string" && p.source
+          ? p.source
+          : DEFAULT_SETTINGS.source,
       channel: p.channel === "beta" ? "beta" : "stable",
-      endpoint: typeof p.endpoint === "string" ? p.endpoint : "",
-      githubRepo: typeof p.githubRepo === "string" ? p.githubRepo : "",
+      endpoint,
+      githubRepo: untouched ? DEFAULT_SETTINGS.githubRepo : savedRepo,
       autoCheck: p.autoCheck === true,
       lastCheckAt: typeof p.lastCheckAt === "number" ? p.lastCheckAt : null,
     };
@@ -108,6 +121,7 @@ export function shouldAutoCheck(
     Partial<Pick<UpdateSettings, "source" | "githubRepo">>,
 ): boolean {
   if (settings.autoCheck !== true) return false;
+  // 调用方没给 source 时按 manifest 判（老签名），真实调用都会把 settings.source 带上
   if ((settings.source ?? "manifest") === "github") {
     return normalizeGithubRepo(settings.githubRepo ?? "") !== null;
   }
@@ -313,7 +327,12 @@ const githubSource: UpdateSource = {
 
       const info = parseGithubRelease(json, channel);
       if (!info) {
-        return { status: "error", current, reason: "没从 GitHub 的响应里认出可用版本（缺 tag_name？）" };
+        return {
+          status: "error",
+          current,
+          reason:
+            "这个仓库的最新 Release 认不出版本号——tag 要写成 v0.2.0 这种纯版本号（像 tauri-cli-v2.12.4 这种前缀版本读不出来）",
+        };
       }
       if (compareVersions(info.version, current) > 0) return { status: "available", current, info };
       return { status: "latest", current };

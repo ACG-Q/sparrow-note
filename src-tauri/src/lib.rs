@@ -1,5 +1,7 @@
 use tauri::webview::{PermissionKind, PermissionResponse};
 
+mod storage;
+
 pub fn notes_migrations() -> Vec<tauri_plugin_sql::Migration> {
   vec![tauri_plugin_sql::Migration {
     version: 1,
@@ -17,6 +19,7 @@ pub fn notes_migrations() -> Vec<tauri_plugin_sql::Migration> {
 }
 
 /// 数据库位置，按构建阶段决定：
+/// - **用户自定义目录**：设置里换过位置就用它（配置在 `storage.json`），写不进去自动回落。
 /// - **开发（debug 构建）**：放在 exe 旁边。`tauri dev` 编的是 debug，本地调试时
 ///   不会被安全软件的文件保护规则干扰，也不用去翻 AppData。
 /// - **打包（release 构建）**：放在用户数据目录（Windows 上是 `%APPDATA%\com.sparrow.note`）。
@@ -27,6 +30,17 @@ pub fn notes_migrations() -> Vec<tauri_plugin_sql::Migration> {
 /// 老版本把库放在 exe 旁边，搬到 AppData 时会自动迁移一次。
 pub fn db_conn_url(app: &tauri::AppHandle) -> Result<String, Box<dyn std::error::Error>> {
   use tauri::Manager;
+
+  // 用户在设置里换过位置：能用就用（桌面 / 安卓都一样），用不了回落默认并保留旧库
+  if let Some(dir) = crate::storage::custom_dir(app) {
+    if crate::storage::dir_writable(&dir) {
+      return Ok(sqlite_url(&dir));
+    }
+    eprintln!(
+      "[sparrow] 自定义数据目录不可写，回落到默认位置：{}",
+      dir.display()
+    );
+  }
 
   #[cfg(any(target_os = "android", target_os = "ios"))]
   {
@@ -73,7 +87,7 @@ pub fn db_conn_url(app: &tauri::AppHandle) -> Result<String, Box<dyn std::error:
 }
 
 fn sqlite_url(dir: &std::path::Path) -> String {
-  format!("sqlite:{}", dir.join("notes.db").display())
+  format!("sqlite:{}", crate::storage::db_path(dir).display())
 }
 
 /// 真正试写一次，别只看 create_dir_all 是否成功
@@ -122,12 +136,204 @@ fn get_sqlite_url(app: tauri::AppHandle) -> Result<String, String> {
   db_conn_url(&app).map_err(|e| e.to_string())
 }
 
+/// 当前存储状态：库在哪、多大、有哪些位置可选
+#[tauri::command]
+fn storage_status(app: tauri::AppHandle) -> Result<storage::StorageStatus, String> {
+  use tauri::Manager;
+
+  let current = db_conn_url(&app).map_err(|e| e.to_string())?;
+  let db_file = std::path::PathBuf::from(current.trim_start_matches("sqlite:"));
+  let dir = db_file
+    .parent()
+    .ok_or_else(|| "数据库路径没有父目录".to_string())?
+    .to_path_buf();
+
+  let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+  let default_dir = default_dir_for_ui(&app, &app_dir);
+  let custom = storage::custom_dir(&app);
+  let is_custom = dir != default_dir;
+
+  // 安卓上的「外部目录」= getExternalFilesDir(Documents)，落在共享存储的 Android/data 下
+  let external = external_dir(&app);
+  let options = storage::candidate_dirs(
+    &app_dir,
+    external.as_deref(),
+    custom.as_deref(),
+  );
+  // 正在用自定义目录、但它不在候选里（比如桌面的自定义位置上次没列出来）也补一条
+  let mut options = options;
+  if is_custom && !options.iter().any(|o| o.path == dir.display().to_string()) {
+    options.push(storage::DirOption {
+      kind: "custom",
+      path: dir.display().to_string(),
+      label: "自定义位置".into(),
+      hint: "当前正在使用".into(),
+    });
+  }
+
+  Ok(storage::StorageStatus {
+    kind: "sqlite",
+    path: db_file.display().to_string(),
+    dir: dir.display().to_string(),
+    size_bytes: storage::db_size(&dir),
+    is_custom,
+    default_dir: default_dir.display().to_string(),
+    can_choose: options.len() > 1 || cfg!(not(any(target_os = "android", target_os = "ios"))),
+    custom_dir: custom.map(|p| p.display().to_string()),
+    options,
+  })
+}
+
+/// 应用外部目录（只有安卓有）；桌面/ iOS 返回 None
+#[allow(unused_variables, unused_imports)]
+fn external_dir(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
+  use tauri::Manager;
+  #[cfg(target_os = "android")]
+  {
+    app.path().document_dir().ok()
+  }
+  #[cfg(not(target_os = "android"))]
+  {
+    None
+  }
+}
+
+/// 界面里「默认位置」应该显示哪个：桌面 debug 在 exe 旁，其余在用户数据目录
+#[allow(unused_variables)]
+fn default_dir_for_ui(app: &tauri::AppHandle, app_dir: &std::path::Path) -> std::path::PathBuf {
+  #[cfg(any(target_os = "android", target_os = "ios"))]
+  {
+    app_dir.to_path_buf()
+  }
+  #[cfg(not(any(target_os = "android", target_os = "ios")))]
+  {
+    if cfg!(debug_assertions) {
+      legacy_exe_dir().unwrap_or_else(|| app_dir.to_path_buf())
+    } else {
+      app_dir.to_path_buf()
+    }
+  }
+}
+
+/// 换位置前的检查：目录能不能用、里面是不是已经有库了。
+///
+/// 放在 Rust 里做而不是前端用 fs 插件的 `exists`：fs 插件查文件要过 scope，
+/// 应用外部目录（`$DOCUMENT`）不在 AppData 作用域里，会被判成 forbidden path。
+/// 这里用 `std::fs` 直接看，不受前端 scope 限制。
+///
+/// `force = true` 时把目标目录里的旧库改名成 `notes.db.bak-<时间戳>` 留档，
+/// 而不是直接删掉——换回原位置时那份旧数据用户可能还要。
+#[tauri::command]
+fn prepare_data_dir(
+  app: tauri::AppHandle,
+  dir: String,
+  force: Option<bool>,
+) -> Result<storage::PrepareDir, String> {
+  use tauri::Manager;
+  use std::time::{SystemTime, UNIX_EPOCH};
+
+  let target = storage::normalize_dir(&dir)?;
+
+  let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+  let external = external_dir(&app);
+  let custom = storage::custom_dir(&app);
+  let candidates = storage::candidate_dirs(&app_dir, external.as_deref(), custom.as_deref());
+  if !storage::dir_allowed(&target, &candidates) {
+    return Err("这个目录不允许：安卓上只能选应用私有目录或应用外部目录".into());
+  }
+  if !storage::dir_writable(&target) {
+    return Err(format!("这个目录写不进去：{}", target.display()));
+  }
+
+  let db_file = storage::db_path(&target);
+  let exists = db_file.exists();
+  let md = std::fs::metadata(&db_file).ok();
+  let old_bytes = md.as_ref().map(|m| m.len()).unwrap_or(0);
+  let old_modified = md
+    .and_then(|m| m.modified().ok())
+    .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+    .map(|d| d.as_millis() as u64);
+
+  let moved_aside = if exists && force.unwrap_or(false) {
+    let stamp = SystemTime::now()
+      .duration_since(UNIX_EPOCH)
+      .map(|d| d.as_secs())
+      .unwrap_or(0);
+    storage::move_existing_db_aside(&target, stamp).map_err(|e| format!("挪开旧库失败：{e}"))?
+  } else {
+    None
+  };
+
+  Ok(storage::PrepareDir {
+    exists: exists && moved_aside.is_none(),
+    db_path: db_file.display().to_string(),
+    old_bytes,
+    old_modified,
+    moved_aside,
+  })
+}
+
+/// 记下新的数据目录。**复制库文件是调用方的事**（先 VACUUM INTO 再调这里，最后重启）。
+///
+/// 移动端只放行候选目录（应用私有 / 应用外部）：SQLite 需要真实路径，
+/// 系统文件选择器给的 `content://` URI 用不了，所以不能随便指一个目录。
+#[tauri::command]
+fn set_data_dir(app: tauri::AppHandle, dir: String) -> Result<(), String> {
+  use tauri::Manager;
+
+  let target = storage::normalize_dir(&dir)?;
+
+  let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+  let external = external_dir(&app);
+  let custom = storage::custom_dir(&app);
+  let candidates = storage::candidate_dirs(&app_dir, external.as_deref(), custom.as_deref());
+  if !storage::dir_allowed(&target, &candidates) {
+    return Err("这个目录不允许：安卓上只能选应用私有目录或应用外部目录".into());
+  }
+
+  if !storage::dir_writable(&target) {
+    return Err(format!("这个目录写不进去：{}", target.display()));
+  }
+
+  storage::write_config(
+    &app,
+    &storage::StorageConfig {
+      data_dir: Some(target.display().to_string()),
+    },
+  )
+}
+
+/// 恢复默认位置（旧库不删，随时能改回来）
+#[tauri::command]
+fn reset_data_dir(app: tauri::AppHandle) -> Result<(), String> {
+  storage::write_config(&app, &storage::StorageConfig::default())
+}
+
+/// 换完位置要重启才生效
+#[tauri::command]
+fn restart_app(app: tauri::AppHandle) {
+  app.restart();
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   let builder = tauri::Builder::default()
     .plugin(tauri_plugin_notification::init())
     .plugin(tauri_plugin_geolocation::init())
-    .invoke_handler(tauri::generate_handler![get_sqlite_url]);
+    // 移动端导出：dialog 负责弹系统「另存为」，fs 负责真正写盘。
+    // 安卓上 dialog 返回的是 content:// URI，fs 的 ContentResolver 分支认得它。
+    .plugin(tauri_plugin_dialog::init())
+    .plugin(tauri_plugin_fs::init())
+    // 安卓上选数据目录（plugin-dialog 在移动端不实现目录选择器）
+    .plugin(tauri_plugin_sparrow_storage::init())
+    .invoke_handler(tauri::generate_handler![
+      get_sqlite_url,
+      storage_status,
+      prepare_data_dir,
+      set_data_dir,
+      reset_data_dir,
+      restart_app
+    ]);
 
   // MCP bridge 只给桌面调试用：它调用了 WebviewWindow 的 minimize/maximize，
   // 这两个方法在安卓上不存在，所以这里和 Cargo.toml 都限定成非移动端。

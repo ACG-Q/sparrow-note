@@ -10,16 +10,17 @@ export type PreviewMedia = {
 
 /** 全屏预览：图片/视频铺满整页，点背景或 Esc 关闭 */
 export function MediaLightbox({ media, onClose }: { media: PreviewMedia; onClose: () => void }) {
-  const [saved, setSaved] = useState(false);
+  const [state, setState] = useState<"idle" | "saved" | "cancelled" | "failed">("idle");
 
   const save = async () => {
     try {
-      await saveImageAs(media.url, media.caption || "图片");
-      setSaved(true);
-      window.setTimeout(() => setSaved(false), 1500);
+      // 移动端会弹系统「另存为」，取消时不能再显示「已保存」
+      const outcome = await saveImageAs(media.url, media.caption || "图片");
+      setState(outcome.status === "saved" ? "saved" : "cancelled");
     } catch {
-      setSaved(false);
+      setState("failed");
     }
+    window.setTimeout(() => setState("idle"), 1500);
   };
 
   useEffect(() => {
@@ -46,7 +47,13 @@ export function MediaLightbox({ media, onClose }: { media: PreviewMedia; onClose
       <div className={s.tools}>
         {media.kind === "image" && (
           <button type="button" className={s.tool} onClick={() => void save()}>
-            {saved ? "已保存" : "存为图片"}
+            {state === "saved"
+              ? "已保存"
+              : state === "cancelled"
+                ? "已取消"
+                : state === "failed"
+                  ? "保存失败"
+                  : "存为图片"}
           </button>
         )}
         <button type="button" className={s.close} onClick={onClose} aria-label="关闭预览">

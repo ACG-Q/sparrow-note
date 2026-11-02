@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 /**
  * CDP 验收脚本：关于页的 GitHub 更新源。
  *
@@ -20,7 +20,7 @@ import path from "node:path";
 
 const APP_URL = process.env.APP_URL ?? "http://localhost:5173/";
 const PORT = Number(process.env.CDP_PORT ?? 9791);
-const REPO = process.env.GITHUB_REPO ?? "sparrow-note/sparrow";
+const REPO = process.env.GITHUB_REPO ?? "ACG-Q/sparrow-note";
 const OUT_DIR = path.resolve("evidence/github-update");
 const API = "https://api.github.com";
 

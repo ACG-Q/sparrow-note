@@ -1,130 +1,219 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  effectiveState,
+  pendingIds,
   permissionRows,
   probePermission,
   requestPermission,
+  resultText,
   stateText,
+  summarize,
   type PermissionId,
   type PermState,
 } from "./lib/permissions";
 import { currentPlatform, platformLabel } from "./lib/platform";
+import { ProfilePage } from "./app/ProfileShell";
 import s from "./SettingsView.module.css";
 
+/**
+ * 权限页：先把每一项的当前状态探出来，再让用户就地申请。
+ *
+ * 这一页只做两件事——**检测**和**发起申请**；系统层面的开关（Windows 隐私设置、
+ * Android 应用权限页）不归这里管，被拒绝时给出去哪儿打开。
+ */
 export function PermissionsView({ onBack }: { onBack: () => void }) {
   const platform = currentPlatform();
   const rows = useMemo(() => permissionRows(platform), [platform]);
-  const [states, setStates] = useState<Partial<Record<PermissionId, PermState>>>({});
-  const [busy, setBusy] = useState<PermissionId | null>(null);
-  const [flash, setFlash] = useState("");
 
-  const refresh = useCallback(
-    async (ids: PermissionId[]) => {
-      const next: Partial<Record<PermissionId, PermState>> = {};
-      for (const id of ids) next[id] = await probePermission(id, platform);
-      setStates((prev) => ({ ...prev, ...next }));
-    },
-    [platform],
-  );
+  /** 探测到的状态 */
+  const [states, setStates] = useState<Partial<Record<PermissionId, PermState>>>({});
+  /** 刚申请完的结果（每行就地显示，不用滚到底看提示） */
+  const [results, setResults] = useState<Partial<Record<PermissionId, PermState>>>({});
+  const [busy, setBusy] = useState<PermissionId | "all" | null>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [loadError, setLoadError] = useState("");
+
+  const probeAll = useCallback(async () => {
+    const next: Partial<Record<PermissionId, PermState>> = {};
+    for (const r of rows) next[r.id] = await probePermission(r.id, platform);
+    setStates(next);
+    return next;
+  }, [rows, platform]);
 
   useEffect(() => {
     let alive = true;
     void (async () => {
-      const next: Partial<Record<PermissionId, PermState>> = {};
-      for (const r of rows) next[r.id] = await probePermission(r.id, platform);
-      if (alive) setStates(next);
+      try {
+        const next: Partial<Record<PermissionId, PermState>> = {};
+        for (const r of rows) next[r.id] = await probePermission(r.id, platform);
+        if (alive) setStates(next);
+      } catch (e) {
+        if (alive) setLoadError(e instanceof Error ? e.message : String(e));
+      }
     })();
     return () => {
       alive = false;
     };
   }, [rows, platform]);
 
+  const summary = summarize(rows, states);
+  const askable = pendingIds(rows, states);
+
   const ask = async (id: PermissionId) => {
     if (busy) return;
     setBusy(id);
-    setFlash("");
-    const after = await requestPermission(id, platform);
-    setStates((prev) => ({ ...prev, [id]: after }));
-    setFlash(
-      after === "granted"
-        ? "已获得授权。"
-        : after === "denied"
-          ? "被拒绝了。可以到系统设置里手动打开，回来再点「重新申请」。"
-          : after === "unsupported"
-            ? "这个平台走不通，换一种方式吧。"
-            : "没有拿到明确结果，可以再试一次。",
-    );
+    setResults((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    try {
+      const after = await requestPermission(id, platform);
+      setStates((prev) => ({ ...prev, [id]: after }));
+      setResults((prev) => ({ ...prev, [id]: after }));
+    } catch (e) {
+      setResults((prev) => ({ ...prev, [id]: "unknown" }));
+      setLoadError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /** 一次把「能申请、还没拿到」的都问一遍；被拒绝的不再自动重问 */
+  const askAll = async () => {
+    if (busy) return;
+    const targets = pendingIds(rows, states);
+    if (targets.length === 0) return;
+    setBusy("all");
+    setLoadError("");
+    setProgress({ done: 0, total: targets.length });
+    const fresh: Partial<Record<PermissionId, PermState>> = {};
+    for (let i = 0; i < targets.length; i++) {
+      const id = targets[i];
+      try {
+        fresh[id] = await requestPermission(id, platform);
+      } catch {
+        fresh[id] = "unknown";
+      }
+      setResults((prev) => ({ ...prev, [id]: fresh[id] }));
+      setProgress({ done: i + 1, total: targets.length });
+    }
+    setStates((prev) => ({ ...prev, ...fresh }));
+    setProgress(null);
     setBusy(null);
   };
 
+  const recheck = async () => {
+    if (busy) return;
+    setBusy("all");
+    try {
+      await probeAll();
+      setResults({});
+    } finally {
+      setBusy(null);
+    }
+  };
+
   return (
-    <div className={s.page}>
-      <div className={s.phead}>
-        <button type="button" className={s.back} onClick={onBack}>
-          ← 我的
-        </button>
-        <div className={s.pheadRow}>
-          <h1>权限</h1>
-          <span className={s.pn}>{platformLabel(platform)}</span>
+    <ProfilePage title="权限" marker={platformLabel(platform)} onBack={onBack}>
+
+      <p className={s.permIntro}>
+        麻雀记不需要账号，也不上传内容。下面这些能力要用时才申请；系统层面的开关不归这里管。
+      </p>
+
+      <div className={s.permSummary}>
+        <div className={s.permSummaryText}>
+          <span className={s.permSummaryMain}>
+            {summary.pending > 0 ? `${summary.pending} 项待授权` : "该给的都给了"}
+          </span>
+          <span className={s.permSummaryMeta}>
+            已允许 {summary.granted}
+            {summary.blocked > 0 && ` · 被拒绝 ${summary.blocked}`}
+            {summary.fixed > 0 && ` · 不适用 ${summary.fixed}`}
+          </span>
+        </div>
+        <div className={s.permSummaryActions}>
+          {askable.length > 0 && (
+            <button
+              type="button"
+              className={`${s.permBtn} ${s.permBtnPrimary}`}
+              onClick={() => void askAll()}
+              disabled={busy !== null}
+            >
+              {busy === "all"
+                ? progress
+                  ? `申请中 ${progress.done}/${progress.total}`
+                  : "申请中…"
+                : `全部申请（${askable.length}）`}
+            </button>
+          )}
+          <button
+            type="button"
+            className={`${s.permBtn} ${s.permBtnGhost}`}
+            onClick={() => void recheck()}
+            disabled={busy !== null}
+          >
+            重新检测
+          </button>
         </div>
       </div>
 
-      <p className={s.hintText}>
-        麻雀记不需要账号，也不上传数据。下面是它在 <strong>{platformLabel(platform)}</strong>{" "}
-        上可能用到的能力、当前状态，以及能不能在这里直接申请。
-      </p>
+      {loadError && <p className={s.permWarn}>检测出错：{loadError}</p>}
 
       <div className={s.permList}>
         {rows.map((r) => {
-          const state = states[r.id] ?? "unknown";
+          const probed = states[r.id] ?? "unknown";
+          const st = effectiveState(probed, r.canRequest);
+          const result = results[r.id];
+          const granted = st === "granted";
+          const actionable = r.canRequest && !granted;
           return (
             <div key={r.id} className={s.permRow}>
               <div className={s.permHead}>
                 <span className={s.permName}>{r.name}</span>
-                <span className={permClass(state)}>{stateText(state)}</span>
+                <span className={permClass(st)}>{stateText(st)}</span>
               </div>
               <p className={s.permWhy}>{r.why}</p>
-              <p className={s.permMeta}>用在：{r.usedBy}</p>
-              {r.note && <p className={s.permNote}>{r.note}</p>}
-              {state === "denied" && r.fixHint && <p className={s.permNote}>去这里打开：{r.fixHint}</p>}
+              <p className={s.permMeta}>{r.usedBy}</p>
 
-              <div className={s.permActions}>
-                {r.canRequest && state !== "granted" && state !== "unsupported" && (
+              {/* 只在「还没拿到」的时候解释平台差异，拿到了就别再占地方 */}
+              {!granted && st === "denied" && r.fixHint && (
+                <p className={s.permFix}>去这里打开：{r.fixHint}</p>
+              )}
+              {!granted && st !== "denied" && r.note && <p className={s.permNote}>{r.note}</p>}
+
+              {actionable && (
+                <div className={s.permActions}>
                   <button
                     type="button"
-                    className={s.permBtn}
+                    className={`${s.permBtn} ${s.permBtnRow}`}
                     onClick={() => void ask(r.id)}
                     disabled={busy !== null}
                   >
-                    {busy === r.id ? "申请中…" : state === "denied" ? "重新申请" : "申请权限"}
+                    {busy === r.id ? "申请中…" : st === "denied" ? "再试一次" : "申请权限"}
                   </button>
-                )}
-                {(state === "granted" || !r.canRequest) && state !== "unsupported" && (
-                  <button
-                    type="button"
-                    className={s.permBtnGhost}
-                    onClick={() => void refresh([r.id])}
-                    disabled={busy !== null}
-                  >
-                    重新检测
-                  </button>
-                )}
-              </div>
+                </div>
+              )}
+
+              {result && (
+                <p className={result === "granted" ? s.permResultOk : s.permResult}>{resultText(r.id, result)}</p>
+              )}
             </div>
           );
         })}
       </div>
 
-      {flash && <p className={s.permFlash}>{flash}</p>}
-
-      <p className={s.hintText}>
-        系统层面的开关（Windows 隐私设置、Android 应用权限等）不受本页控制；这里只做「检测 + 发起申请」。
+      <p className={s.permFoot}>
+        被拒绝后系统通常不再弹窗。{platformLabel(platform)} 上可以到「设置 → 应用 → 麻雀记 → 权限」里改，
+        改完回来点上面的「重新检测」。
       </p>
-    </div>
+    </ProfilePage>
   );
 }
 
 function permClass(state: PermState): string {
   if (state === "granted") return `${s.permState} ${s.permOk}`;
   if (state === "denied") return `${s.permState} ${s.permBad}`;
-  return `${s.permState} ${s.permMuted}`;
+  if (state === "unsupported") return `${s.permState} ${s.permMuted}`;
+  return `${s.permState} ${s.permWait}`;
 }

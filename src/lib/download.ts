@@ -1,3 +1,5 @@
+import { saveDataUrlAs, type SaveOutcome } from "./saveFile";
+
 /** 文件名收口：去掉非法字符，并保证带图片扩展名（标题里没写 .png 时补上） */
 export function imageFileName(name: string): string {
   const safe = name.replace(/[\\/:*?"<>|]/g, "_") || "image";
@@ -15,26 +17,17 @@ export function partFileName(name: string, index: number): string {
   return imageFileName(index <= 0 ? stem : `${stem}-${index + 1}`);
 }
 
-/** 把 data URL 存成文件；SVG 会先画进 canvas 再导出 PNG */
-export async function saveImageAs(dataUrl: string, name: string): Promise<void> {
+/**
+ * 把 data URL 存成文件；SVG 会先画进 canvas 再导出 PNG。
+ *
+ * 移动端的 WebView 不认 `<a download>`，这里统一交给 saveFile：
+ * 移动端走系统「另存为」+ 真正写盘，浏览器保留原来的下载分支。
+ * 返回值是真实结果——取消和失败都不会再被当成成功。
+ */
+export async function saveImageAs(dataUrl: string, name: string): Promise<SaveOutcome> {
   const fileName = imageFileName(name);
-
-  if (!dataUrl.startsWith("data:image/svg")) {
-    triggerDownload(dataUrl, fileName);
-    return;
-  }
-
-  const png = await svgToPng(dataUrl);
-  triggerDownload(png, fileName);
-}
-
-function triggerDownload(url: string, name: string): void {
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  const url = dataUrl.startsWith("data:image/svg") ? await svgToPng(dataUrl) : dataUrl;
+  return saveDataUrlAs(url, fileName);
 }
 
 export function svgToPng(svgDataUrl: string, scale = 2): Promise<string> {

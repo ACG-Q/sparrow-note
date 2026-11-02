@@ -6,7 +6,7 @@ import { NoteEditor } from "./NoteEditor";
 /**
  * NoteEditor 的冒烟测试：它整个依赖 BlockNote（ProseMirror + Mantine 主题），
  * 单测里能做的只有「装得起来、不崩、编辑器根节点在、卸载不报错」。
- * 真正的输入/斜杠菜单/表格交互仍然靠 review/*.mjs 的 CDP 探针（见 AGENTS.md 第 8 节）。
+ * 真正的输入/斜杠菜单/表格交互仍然靠在真实页面里用 CDP 探针驱动（探针脚本不入库）。
  */
 describe("NoteEditor 冒烟", () => {
   it("能挂载出可编辑的编辑器根节点", async () => {

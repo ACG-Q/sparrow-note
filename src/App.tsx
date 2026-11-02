@@ -18,6 +18,7 @@ import { CommandPalette } from "./components/CommandPalette";
 import { UndoToast } from "./components/UndoToast";
 import type { NavView } from "./lib/nav";
 import { getSettings } from "./lib/settings";
+import { maybeAutoBackup } from "./lib/backups";
 import { nextThemePref, resolveDark, setThemePref, useThemePref } from "./lib/theme";
 import s from "./App.module.css";
 
@@ -200,6 +201,14 @@ export default function App() {
   );
   // 目录栏收起来时，空态里补一份最近几篇，避免整屏只有一枚印章
   const recent = useMemo(() => (listOn ? [] : sorted.slice(0, 6)), [listOn, sorted]);
+
+  // 启动后按设置做一次自动备份（关着、浏览器里、还没到点都会自己跳过）
+  const autoBackupDone = useRef(false);
+  useEffect(() => {
+    if (autoBackupDone.current || notes.length === 0) return;
+    autoBackupDone.current = true;
+    void maybeAutoBackup(notes);
+  }, [notes]);
 
   // 全局快捷键：⌘/Ctrl+K 命令面板、Esc 收面板、（dev）F12 开发者工具
   useEffect(() => {

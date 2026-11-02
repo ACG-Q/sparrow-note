@@ -37,10 +37,7 @@ vi.mock("./db/notes", () => ({
 }));
 vi.mock("./db/sqlite", () => ({ getCorruptRowCount: () => 0, rowToNote: () => null }));
 
-// —— 存储信息 / 地图 / 备份包 ——
-vi.mock("./lib/storageInfo", () => ({
-  getStorageInfo: async () => ({ backend: "IndexedDB", noteCount: 2, bytes: 4096, location: "浏览器" }),
-}));
+// —— 地图 / 备份包 ——
 vi.mock("./lib/mapProviders", () => ({
   MAP_PROVIDERS: [
     { id: "amap", label: "高德", attribution: "高德", coordSystem: "gcj02", maxZoom: 18, tileUrl: () => "", note: "" },
@@ -169,6 +166,16 @@ describe("SettingsView 数据区", () => {
     expect(danger).toBeTruthy();
     danger?.click();
     await waitFor(() => expect(clearAllNotes).toHaveBeenCalled(), { timeout: 3000 });
+  });
+
+  it("备份文件的选择框要把 octet-stream 算进去", async () => {
+    // 安卓 DocumentsUI 按 MIME 过滤：.sparrow 会被识别成 application/octet-stream，
+    // accept 里不写它，用户自己的备份文件就会显示成灰色、点不动。
+    const { container } = setup();
+    await waitFor(() => expect(container.textContent).toMatch(/数据/));
+    const input = container.querySelector<HTMLInputElement>('input[type="file"]');
+    expect(input?.accept).toContain(".sparrow");
+    expect(input?.accept).toContain("application/octet-stream");
   });
 
   it("地图来源可切换并写入设置", async () => {

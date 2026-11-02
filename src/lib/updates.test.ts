@@ -1,3 +1,4 @@
+﻿// @vitest-environment happy-dom
 import { describe, expect, it } from "vitest";
 import { compareVersions } from "./appInfo";
 import { parseManifest, shouldAutoCheck } from "./updates";
@@ -81,5 +82,47 @@ describe("启动时要不要自动检查", () => {
       endpoint: string;
     };
     expect(shouldAutoCheck(loose)).toBe(false);
+  });
+});
+
+describe("默认更新源：远程仓库", () => {
+  const KEY = "sparrow-update-settings";
+  const set = (v: unknown) => localStorage.setItem(KEY, JSON.stringify(v));
+
+  it("没存过设置时，默认就是 package.json 里的仓库", async () => {
+    localStorage.removeItem(KEY);
+    const { loadUpdateSettings } = await import("./updates");
+    const { DEFAULT_GITHUB_REPO } = await import("./repo");
+    const s = loadUpdateSettings();
+    expect(s.source).toBe("github");
+    expect(s.githubRepo).toBe(DEFAULT_GITHUB_REPO);
+    expect(DEFAULT_GITHUB_REPO).toContain("/");
+  });
+
+  it("老版本留下的「空地址 + 空仓库」按从没配置过处理，迁移到默认仓库", async () => {
+    // 老默认：manifest + endpoint 空 + githubRepo 空 → 页面会显示「未配置」
+    set({ source: "manifest", channel: "stable", endpoint: "", githubRepo: "", autoCheck: false, lastCheckAt: null });
+    const { loadUpdateSettings } = await import("./updates");
+    const { DEFAULT_GITHUB_REPO } = await import("./repo");
+    const s = loadUpdateSettings();
+    expect(s.source).toBe("github");
+    expect(s.githubRepo).toBe(DEFAULT_GITHUB_REPO);
+  });
+
+  it("用户自己配过的（填了地址或换了仓库）原样保留", async () => {
+    set({ source: "manifest", endpoint: "https://example.com/x.json", githubRepo: "", autoCheck: true, lastCheckAt: 7 });
+    const { loadUpdateSettings } = await import("./updates");
+    const s = loadUpdateSettings();
+    expect(s.source).toBe("manifest");
+    expect(s.endpoint).toBe("https://example.com/x.json");
+    expect(s.githubRepo).toBe("");
+    expect(s.autoCheck).toBe(true);
+    expect(s.lastCheckAt).toBe(7);
+  });
+
+  it("仓库被改过就听用户的", async () => {
+    set({ source: "github", githubRepo: "other/repo", autoCheck: false });
+    const { loadUpdateSettings } = await import("./updates");
+    expect(loadUpdateSettings().githubRepo).toBe("other/repo");
   });
 });

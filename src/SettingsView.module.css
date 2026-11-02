@@ -1,58 +1,5 @@
-.page {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 0 20px calc(120px + env(safe-area-inset-bottom));
-}
-
-/* ---------- 页头 ---------- */
-.phead {
-  padding-top: calc(18px + env(safe-area-inset-top));
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--ink);
-}
-
-/* 返回放在标题上方一行：标题与下面的区块标签共用同一条左锚线 */
-.back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 10px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--muted-ink);
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  cursor: pointer;
-}
-
-.back:hover {
-  color: var(--seal);
-}
-
-.pheadRow {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-
-.phead h1 {
-  margin: 0;
-  font-family: var(--serif);
-  font-size: 24px;
-  letter-spacing: .14em;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.pn {
-  margin-left: auto;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: .12em;
-  color: var(--muted-2);
-}
+/* 页面外壳（留白 / 页头 / 返回 / 右侧标记）已收进 app/ProfileShell.module.css，
+   四个子页面共用那一份；这里只留「设置」页自己的分区与行。 */
 
 /* ---------- 分区 ---------- */
 .block {
@@ -117,19 +64,23 @@
   border-left: 1px solid var(--rule);
 }
 
+/* 选中态要在 33px 宽的格子里也一眼看出来：底色加深 + 一道 1px 深线 */
 .segOn {
   background: var(--paper-3);
+  box-shadow: inset 0 0 0 1px var(--rule-strong);
   color: var(--ink);
 }
 
 /* 行内分段更紧凑 */
+/* 行内分段：手机按内容定宽（360px 宽时定宽格子会把「代码块折叠」的标签挤成竖排），
+   桌面格子定宽，两三选项的控件才不会一个宽一个窄 */
 .row .seg {
   flex: none;
 }
 
 .row .segBtn {
-  min-height: 34px;
-  padding: 6px 12px;
+  min-height: 36px;
+  padding: 6px 10px;
   font-size: 12px;
 }
 
@@ -160,10 +111,10 @@
 }
 
 /* 危险操作：实线印章描边，并与「导出 / 导入」拉开距离 */
+/* 危险操作：印章色实线；单独成组后不再靠 auto margin 挤到右边 */
 .acts .danger {
   color: var(--seal);
   border-color: var(--seal);
-  margin-left: auto;
 }
 
 .acts .danger:hover {
@@ -171,12 +122,39 @@
   color: var(--paper);
 }
 
-.msg {
-  margin-top: 12px;
+/* 分组小标题：比 .bh 更轻，用来把「导入导出 / 危险操作」分开 */
+.subGroup {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.subHead {
+  margin: 0 0 8px;
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: .06em;
-  color: var(--muted-ink);
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  font-weight: 400;
+  color: var(--muted-2);
+}
+
+.dangerHint {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--muted-2);
+}
+
+/* 状态消息：块级、左侧色条，跟哪一排按钮说的清楚 */
+.status {
+  margin: 14px 0 0;
+  padding: 8px 10px;
+  border-left: 2px solid var(--seal);
+  background: var(--paper-2);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
 }
 
 /* ---------- 导入预览 / 报告 ---------- */
@@ -369,9 +347,10 @@
   border-radius: 0;
 }
 
+/* 勾选是「已开」这种中性状态，用墨色；印章红只留给危险操作和主操作 */
 .kindBoxOn {
-  background: var(--seal);
-  border-color: var(--seal);
+  background: var(--ink);
+  border-color: var(--ink);
 }
 
 .kindText {
@@ -453,13 +432,66 @@
 }
 
 /* ---------- 权限页 ---------- */
+.permIntro {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  line-height: 1.75;
+  letter-spacing: .02em;
+  color: var(--muted-ink);
+}
+
+/* 顶部汇总条：待申请几项 + 一键申请 */
+/* 顶部汇总条：上面一句话，下面动作，窄屏不会挤成一团 */
+/* 汇总条不再是一个填充面板：一行文字 + 一组按钮，上下各一条发丝线 */
+.permSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 14px 0;
+  border-top: 1px solid var(--rule-soft);
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.permSummaryText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.permSummaryMain {
+  font-family: var(--serif);
+  font-size: 15px;
+  letter-spacing: .06em;
+  color: var(--ink);
+}
+
+.permSummaryMeta {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .06em;
+  color: var(--muted-2);
+}
+
+.permSummaryActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .permList {
-  margin-top: 18px;
+  margin-top: 6px;
 }
 
 .permRow {
-  padding: 16px 0;
+  padding: 14px 0;
   border-bottom: 1px solid var(--rule-soft);
+}
+
+.permRow:last-child {
+  border-bottom: none;
 }
 
 .permHead {
@@ -476,12 +508,14 @@
   color: var(--ink);
 }
 
+/* 授权状态和标题同一层信息，不能做成 9px 的角标 */
 .permState {
   flex: none;
+  margin-left: auto;
   font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: .06em;
-  padding: 2px 6px;
+  font-size: 11.5px;
+  letter-spacing: .08em;
+  padding: 3px 8px;
   border: 1px solid var(--rule);
 }
 
@@ -495,6 +529,12 @@
   border-color: var(--seal);
 }
 
+/* 待申请：比「不适用」显眼一点，但仍是一枚安静的方章 */
+.permWait {
+  color: var(--ink-2);
+  border-color: var(--rule-strong);
+}
+
 .permMuted {
   color: var(--muted-2);
 }
@@ -502,7 +542,7 @@
 .permWhy {
   margin: 8px 0 0;
   font-size: 13px;
-  line-height: 1.75;
+  line-height: 1.7;
   letter-spacing: .02em;
   color: var(--ink-2);
 }
@@ -522,6 +562,16 @@
   color: var(--muted-ink);
   padding-left: 10px;
   border-left: 2px solid var(--rule);
+}
+
+/* 被拒绝：换印章色，和「去这里打开」的路径放一起 */
+.permFix {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink-2);
+  padding-left: 10px;
+  border-left: 2px solid var(--seal);
 }
 
 /* ---------- 设置：地图瓦片源 ---------- */
@@ -637,46 +687,199 @@
   color: var(--muted-2);
 }
 
-/* ---------- 权限页的操作区 ---------- */
-.permActions {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--rule-soft);
+/* ---------- 数据与存储：用量 + 存放位置 + 自动备份 ---------- */
+/* 存放位置：两个真目录二选一（安卓）或默认/自定义（桌面） */
+.placeBlock {
+  margin-top: 6px;
 }
 
-.permBtn {
-  padding: 5px 12px;
-  border: 1px solid var(--seal);
+.placeBlock .row {
+  align-items: flex-start;
+}
+
+.placeList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.placeBtn {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 12px;
+  border: 1px solid var(--rule);
   background: transparent;
-  color: var(--seal);
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: .05em;
+  text-align: left;
   cursor: pointer;
   border-radius: 0;
+  transition: border-color .16s ease, background .16s ease;
 }
 
-.permBtn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--seal) 8%, transparent);
+.placeBtn:hover:not(:disabled) {
+  border-color: var(--ink-2);
 }
 
-.permBtn:disabled {
-  opacity: .5;
+/* 选中的存放位置：墨色边框 + 一道左侧墨条，不用印章红（红留给危险操作） */
+.placeOn {
+  border-color: var(--ink-2);
+  box-shadow: inset 2px 0 0 var(--ink);
+  background: var(--paper-2);
   cursor: default;
 }
 
-.permBtnGhost {
-  padding: 5px 12px;
-  border: 1px solid var(--rule);
-  background: transparent;
-  color: var(--muted-2);
+.placeBtn:disabled {
+  opacity: .85;
+}
+
+.placeLabel {
+  font-family: var(--serif);
+  font-size: 13.5px;
+  letter-spacing: .03em;
+  color: var(--ink);
+}
+
+.placeHint {
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: .05em;
+  font-size: 9px;
+  line-height: 1.6;
+  letter-spacing: .03em;
+  color: var(--muted-2);
+  overflow-wrap: anywhere;
+}
+
+.usageRow {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 0 4px;
+}
+
+.usageMain {
+  font-family: var(--serif);
+  font-size: 15px;
+  letter-spacing: .04em;
+  color: var(--ink);
+}
+
+.usageMeta {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .04em;
+  color: var(--muted-2);
+}
+
+.backupBlock {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.backupHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.backupHead .kindBox {
+  margin-top: 2px;
+}
+
+.backupText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.backupLabel {
+  font-family: var(--serif);
+  font-size: 13.5px;
+  letter-spacing: .03em;
+  color: var(--ink);
+}
+
+.backupHint {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  line-height: 1.6;
+  letter-spacing: .04em;
+  color: var(--muted-2);
+}
+
+.backupBlock .row {
+  margin-top: 10px;
+}
+
+.backupMeta {
+  margin: 10px 0 0;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  line-height: 1.7;
+  letter-spacing: .04em;
+  color: var(--muted-2);
+}
+
+.footNote {
+  margin: 22px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 11.5px;
+  line-height: 1.75;
+  color: var(--muted-2);
+}
+
+/* ---------- 权限页的操作区 ---------- */
+.permActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  /* 按钮别贴着下一行的发丝线，否则看着像按钮带了条下划线 */
+  padding-bottom: 16px;
+}
+
+/* 手机上按钮得够得着：最小 40px 高，字不用挤到 10px */
+.permBtn {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--seal);
+  background: transparent;
+  color: var(--seal);
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: .08em;
   cursor: pointer;
   border-radius: 0;
+  transition: background .16s ease, border-color .16s ease, color .16s ease;
+}
+
+.permBtnPrimary {
+  background: var(--seal);
+  color: var(--paper);
+}
+
+.permBtnPrimary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--seal) 86%, var(--ink));
+}
+
+.permBtnGhost {
+  border-color: var(--rule);
+  color: var(--muted-ink);
+}
+
+/* 行内申请：墨色描边，把唯一的实心红留给「全部申请」 */
+.permBtnRow {
+  border-color: var(--ink-2);
+  color: var(--ink);
+}
+
+.permBtnRow:hover:not(:disabled) {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
 }
 
 .permBtnGhost:hover:not(:disabled) {
@@ -684,19 +887,44 @@
   color: var(--seal);
 }
 
-.permBtnGhost:disabled {
+.permBtn:disabled {
   opacity: .5;
   cursor: default;
 }
 
-.permFlash {
-  margin: 14px 0 0;
-  padding: 8px 12px;
-  border-left: 2px solid var(--seal);
-  background: var(--paper-2);
+/* 申请结果就地显示，不用滚到页面底部去找 */
+.permResult,
+.permResultOk {
+  margin: 10px 0 0;
+  padding: 8px 10px;
   font-size: 12.5px;
   line-height: 1.7;
+  background: var(--paper-2);
+  border-left: 2px solid var(--seal);
   color: var(--ink-2);
+}
+
+.permResultOk {
+  border-left-color: var(--rule-strong);
+  color: var(--muted-ink);
+}
+
+.permWarn {
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  border-left: 2px solid var(--seal);
+  color: var(--seal);
+}
+
+.permFoot {
+  margin: 18px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--muted-2);
 }
 
 /* ---------- 关于页 ---------- */
@@ -743,11 +971,11 @@
   background: var(--paper);
 }
 
+/* 更新结果：一行小字，不要填充面板（这一页已经有太多「框」了） */
 .updateStatus {
-  margin: 10px 0 0;
-  padding: 8px 12px;
-  border-left: 2px solid var(--rule);
-  background: var(--paper-2);
+  margin: 12px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--rule-soft);
   font-family: var(--mono);
   font-size: 11px;
   line-height: 1.7;
@@ -755,13 +983,12 @@
 }
 
 .updateStatus[data-status="available"] {
-  border-left-color: var(--seal);
   color: var(--seal);
 }
 
 .updateStatus[data-status="error"],
 .updateStatus[data-status="unsupported"] {
-  border-left-color: var(--rule-strong);
+  color: var(--muted-ink);
 }
 
 .updateLink {
@@ -840,4 +1067,127 @@
   font-size: 12px;
   line-height: 1.8;
   color: var(--ink-2);
+}
+
+/* ---------- 桌面：页边标签版式 ----------
+   分区标题从「正文上方的一条」（手机）变成「左边的页边标签」（桌面）：
+   正文占右侧一整栏，标题缩进左界，像印刷品的边注。
+   这一份被四个子页面共用，改这里四页一起变。 */
+@media (min-width: 1024px) {
+  .block {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    column-gap: 32px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  .block:first-of-type {
+    border-top: none;
+  }
+
+  .block > .bh {
+    /* 页边标签：去掉原来的下划线，正文里的行自己分隔，标题只做边注 */
+    grid-column: 1;
+    margin: 1px 0 0;
+    padding: 0;
+    border-bottom: none;
+    font-size: 12.5px;
+    line-height: 1.5;
+    letter-spacing: .16em;
+    position: sticky;
+    top: 16px;
+    align-self: start;
+  }
+
+  .block > *:not(.bh) {
+    grid-column: 2;
+  }
+
+  .row {
+    padding: 12px 0;
+  }
+
+  .rowLabel {
+    font-size: 14px;
+  }
+
+  /* 分段控件：每格等宽，右边缘对齐后左边缘的锯齿也随之变小 */
+  .row .seg {
+    /* 每格定宽：一行行控件虽然右对齐，但格子宽度一致后锯齿小很多 */
+    grid-auto-columns: 80px;
+  }
+
+  .row .segBtn {
+    min-height: 36px;
+    font-size: 12.5px;
+  }
+
+  .hintText,
+  .footNote {
+    font-size: 12.5px;
+    line-height: 1.75;
+  }
+
+  /* 权限页正文不在 .block 里：和别的页同一条左界，右界收到可读宽度 */
+  .permIntro,
+  .permSummary,
+  .permList,
+  .permFoot {
+    margin-left: 164px;
+    max-width: 720px;
+  }
+
+  /* 页面级的说明文字不在 .block 里，缩到和正文同一条左界 */
+  .footNote {
+    margin-left: 164px;
+  }
+}
+
+/* 长句行：标签上、说明下，避免中文长句右对齐后每行起点参差 */
+.rowStack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.rowStack .permMeta {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--muted-ink);
+}
+
+@media (min-width: 1024px) {
+  .rowStack {
+    padding: 13px 0;
+  }
+}
+
+/* 360px 的手机（内容宽 328）：行标签和四选项控件挤在一行会折行，收紧一点间距和字重 */
+@media (max-width: 380px) {
+  .row {
+    gap: 10px;
+  }
+
+  .rowLabel {
+    font-size: 12.5px;
+  }
+
+  .row .segBtn {
+    padding: 6px 9px;
+    font-size: 11.5px;
+  }
+}
+
+/* 说明文字里的行内链接：不要做成按钮的样子 */
+.inlineLink {
+  color: var(--seal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.inlineLink:hover {
+  color: var(--ink);
 }

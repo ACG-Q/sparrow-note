@@ -4,6 +4,9 @@ import { inTauri } from "./platform";
 export const APP_NAME = "麻雀记";
 export const APP_ID = "com.sparrow.note";
 
+/** 同步的版本兜底（取 package.json）。要「立刻就有值」的地方用它，权威版本仍用 appVersion() */
+export const VERSION_FALLBACK: string = pkg.version;
+
 /**
  * 当前版本。
  * 打包版以 Tauri 的真实版本为准（tauri.conf.json），

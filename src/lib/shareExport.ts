@@ -1,5 +1,6 @@
 import { strToU8, zipSync } from "fflate";
 import { imageFileName, partFileName, saveImageAs } from "./download";
+import { saveBlobAs, type SaveOutcome } from "./saveFile";
 import { markdownFileName, type MarkdownBundle, type ShareBlock } from "./share";
 import fontUrl from "../assets/fonts/sparrow-sans-sc.ttf?url";
 import boldFontUrl from "../assets/fonts/sparrow-sans-sc-bold.ttf?url";
@@ -191,12 +192,19 @@ export type PngExportResult = {
   cssHeight: number;
   /** 实际使用的倍率 */
   scale: number;
+  /**
+   * 每张图的保存结果（与 files 同序）。移动端每张都要过一次「另存为」，
+   * 用户中途取消时长度会短于 count——界面据此说清「存了几张、几张取消」。
+   */
+  saves: SaveOutcome[];
 };
 
 /**
  * 长图导出；width 是 CSS 像素宽度（内部再乘倍率）。
  * 整篇超过 canvas 上限时自动拆成多张「标题.png / 标题-2.png / 标题-3.png」，
  * 每张都尽量填满，切分带留少量重叠。
+ *
+ * 每张图都要等真的存好才算数：移动端用户取消一次就停下，不再继续弹对话框。
  */
 export async function exportNodePng(
   node: HTMLElement,
@@ -208,6 +216,7 @@ export async function exportNodePng(
   const slices = planShotSlices(snap.height, scale);
   const base = title || "麻雀记";
   const files: PngExportResult["files"] = [];
+  const saves: SaveOutcome[] = [];
 
   for (let i = 0; i < slices.length; i++) {
     const part = slices[i];
@@ -219,11 +228,14 @@ export async function exportNodePng(
     // 长图很占内存（一张几千 x 三万像素）：存完立刻释放，免得几张同时留在内存里
     canvas.width = 1;
     canvas.height = 1;
-    await saveImageAs(dataUrl, name);
+    const outcome = await saveImageAs(dataUrl, name);
+    saves.push(outcome);
     files.push(size);
+    // 取消后剩下的不再弹对话框（用户已经明确表示不存了）
+    if (outcome.status === "cancelled") break;
   }
 
-  return { count: slices.length, files, slices, cssHeight: snap.height, scale };
+  return { count: slices.length, files, slices, cssHeight: snap.height, scale, saves };
 }
 
 let fontCache: { regular: ArrayBuffer; bold: ArrayBuffer } | null = null;
@@ -247,11 +259,14 @@ async function loadPdfFonts(): Promise<{ regular: ArrayBuffer; bold: ArrayBuffer
 export async function exportNotePdf(
   blocks: ShareBlock[],
   meta: { title: string; date?: string },
-): Promise<void> {
+): Promise<SaveOutcome> {
   const { buildNotePdf } = await import("./pdfDoc");
   const fonts = await loadPdfFonts();
   const bytes = await buildNotePdf(blocks, meta, fonts.regular, fonts.bold);
-  downloadBlob(new Blob([bytes as unknown as BlobPart], { type: "application/pdf" }), markdownFileName(meta.title, "pdf"));
+  return saveBlobAs(
+    new Blob([bytes as unknown as BlobPart], { type: "application/pdf" }),
+    markdownFileName(meta.title, "pdf"),
+  );
 }
 
 /** A4 纸张（pt）与页边距 */
@@ -267,7 +282,7 @@ const PAGE_MARGIN = 36;
  * 整篇很长时不能先拼一张巨大的 canvas（会变黑图），所以：
  * 先压低倍率（最低 1），再按 A4 页高逐段从同一张位图上直接画页。
  */
-export async function exportNodePdf(node: HTMLElement, title: string): Promise<void> {
+export async function exportNodePdf(node: HTMLElement, title: string): Promise<SaveOutcome> {
   const snap = await renderNodeSnapshot(node);
   const { PDFDocument } = await import("pdf-lib");
   const pdf = await PDFDocument.create();
@@ -310,22 +325,34 @@ export async function exportNodePdf(node: HTMLElement, title: string): Promise<v
   }
 
   const out = await pdf.save();
-  downloadBlob(new Blob([out as unknown as BlobPart], { type: "application/pdf" }), markdownFileName(title, "pdf"));
+  return saveBlobAs(
+    new Blob([out as unknown as BlobPart], { type: "application/pdf" }),
+    markdownFileName(title, "pdf"),
+  );
 }
 
 /** Markdown 单文件（附件内联 base64） */
-export function downloadMarkdownFile(markdown: string, title: string): void {
-  downloadBlob(new Blob([markdown], { type: "text/markdown;charset=utf-8" }), markdownFileName(title));
+export async function downloadMarkdownFile(markdown: string, title: string): Promise<SaveOutcome> {
+  return saveBlobAs(
+    new Blob([markdown], { type: "text/markdown;charset=utf-8" }),
+    markdownFileName(title),
+  );
 }
 
 /** Markdown 压缩包：正文 + assets/ 一起打包 */
-export function downloadMarkdownZip(bundle: MarkdownBundle, title: string): void {
+export async function downloadMarkdownZip(
+  bundle: MarkdownBundle,
+  title: string,
+): Promise<SaveOutcome> {
   const files: Record<string, Uint8Array> = {
     [markdownFileName(title)]: strToU8(bundle.markdown),
   };
   for (const asset of bundle.assets) files[asset.path] = asset.bytes;
   const zipped = zipSync(files, { level: 6 });
-  downloadBlob(new Blob([zipped as unknown as BlobPart], { type: "application/zip" }), markdownFileName(title, "zip"));
+  return saveBlobAs(
+    new Blob([zipped as unknown as BlobPart], { type: "application/zip" }),
+    markdownFileName(title, "zip"),
+  );
 }
 
 /** 走系统打印（矢量文字，桌面端质量最好） */
@@ -346,13 +373,4 @@ export function printNode(node: HTMLElement): void {
   window.addEventListener("focus", cleanup, { once: true });
   window.print();
   window.setTimeout(cleanup, 30000);
-}
-
-function downloadBlob(blob: Blob, name: string): void {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

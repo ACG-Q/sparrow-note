@@ -1,8 +1,12 @@
-{
+﻿{
   "name": "sparrow-note",
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/ACG-Q/sparrow-note.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -21,6 +25,8 @@
     "@mantine/hooks": "^9.7.2",
     "@pdf-lib/fontkit": "^1.1.1",
     "@tauri-apps/api": "^2.12.4",
+    "@tauri-apps/plugin-dialog": "^2.8.4",
+    "@tauri-apps/plugin-fs": "^2.7.1",
     "@tauri-apps/plugin-geolocation": "^2.5.0",
     "@tauri-apps/plugin-notification": "^2.7.0",
     "@tauri-apps/plugin-sql": "^2.6.0",

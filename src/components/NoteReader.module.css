@@ -210,18 +210,24 @@
 }
 
 /* ---------- 表格 ---------- */
+/* 市面常见做法（GitHub 的 markdown 表格、Obsidian 阅读视图、Notion 的表格块都是这个思路）：
+   表格填满正文栏、列宽由内容按比例分配、内容折行；只有当列多到每列不足最小可读宽度时，
+   才让外层横向滚动，而不是把列压成一条或者藏起来。 */
 .tableWrap {
   margin: 22px 0;
-  /* 列多/字长时不压缩，横向滚动看 */
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .table {
   border-collapse: collapse;
-  /* 按内容自然撑开，至少占满一栏；超宽交给外层滚动 */
-  width: max-content;
-  min-width: 100%;
+  /* 填满正文栏、列宽按内容分配（长文折行而不是把表格撑爆）；
+     列数从 --cols 进来，列多时保证每列还有最小可读宽度，不够就让外层横向滚动。
+     注意：min-width 加在 td 上浏览器不认（table-cell 不是普通盒），必须量在 table 上。 */
+  width: 100%;
+  min-width: calc(var(--cols, 3) * 5.5em);
   font-size: 14px;
   line-height: 1.6;
   color: var(--ink-2);
@@ -229,8 +235,8 @@
 
 .td {
   padding: 9px 12px;
-  max-width: 380px;
-  word-break: break-word;
+  /* 长网址 / 长串不撑破列 */
+  overflow-wrap: anywhere;
   border-bottom: 1px solid var(--rule-soft);
   border-right: 1px solid var(--rule-soft);
   text-align: left;
@@ -241,11 +247,12 @@
   border-right: none;
 }
 
-/* 首行当表头：线重一档，字用衬线 */
+/* 首行当表头：线重一档，字用衬线；表头不折行（两字标题不该被挤成竖排） */
 .th {
   font-family: var(--serif);
   font-weight: 600;
   color: var(--ink);
+  white-space: nowrap;
   border-bottom: 1px solid var(--rule-strong);
 }
 

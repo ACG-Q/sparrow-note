@@ -1,12 +1,18 @@
 /* 自研表格（只读渲染）——沿用纸面设计语言：0 圆角、1px 细线、表头浅底 */
+/* 布局与内置表格一致：填满正文栏、按内容分配列宽、内容折行；列多到每列不足最小可读宽度才滚动 */
 .wrap {
   margin: 14px 0 18px;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
   max-width: 100%;
 }
 
 .table {
   border-collapse: collapse;
+  /* 与内置表格同一套：填满正文栏，列多时保证最小可读宽度，再不够才滚动 */
+  width: 100%;
+  min-width: calc(var(--sparrow-cols, 3) * 5em);
   font-size: 13px;
   line-height: 1.75;
   color: var(--ink, #191713);
@@ -17,8 +23,7 @@
   padding: 7px 10px;
   vertical-align: top;
   text-align: left;
-  max-width: 380px;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .head {

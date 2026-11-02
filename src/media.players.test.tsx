@@ -2,7 +2,9 @@
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("./lib/download", () => ({ saveImageAs: async () => {}, downloadBlob: () => {} }));
+vi.mock("./lib/download", () => ({
+  saveImageAs: async () => ({ status: "saved", name: "图.png", via: "browser" }),
+}));
 
 import { AudioPlayer } from "./editor/blocks/_shared/AudioPlayer";
 import { FilePreview } from "./components/FilePreview";

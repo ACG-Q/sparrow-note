@@ -41,11 +41,25 @@ vi.mock("./lib/share", () => ({
 }));
 const shareCall = { md: 0, zip: 0, pdf: 0, png: 0, print: 0 };
 vi.mock("./lib/shareExport", () => ({
-  downloadMarkdownFile: () => { shareCall.md += 1; },
-  downloadMarkdownZip: () => { shareCall.zip += 1; },
-  exportNotePdf: async () => { shareCall.pdf += 1; },
-  exportNodePng: async () => { shareCall.png += 1; return { count: 1 }; },
-  printNode: () => { shareCall.print += 1; },
+  downloadMarkdownFile: async () => {
+    shareCall.md += 1;
+    return { status: "saved", name: "标题.md", via: "browser" };
+  },
+  downloadMarkdownZip: async () => {
+    shareCall.zip += 1;
+    return { status: "saved", name: "标题.zip", via: "browser" };
+  },
+  exportNotePdf: async () => {
+    shareCall.pdf += 1;
+    return { status: "saved", name: "标题.pdf", via: "browser" };
+  },
+  exportNodePng: async () => {
+    shareCall.png += 1;
+    return { count: 1, saves: [{ status: "saved", name: "标题.png", via: "browser" }] };
+  },
+  printNode: () => {
+    shareCall.print += 1;
+  },
 }));
 vi.mock("./editor/NoteEditor", () => ({
   NoteEditor: ({ onChange }: { onChange: (blocks: unknown[]) => void }) => (

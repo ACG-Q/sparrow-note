@@ -12,6 +12,19 @@
     "sql:allow-execute",
     "geolocation:allow-check-permissions",
     "geolocation:allow-request-permissions",
-    "geolocation:allow-get-current-position"
+    "geolocation:allow-get-current-position",
+    "dialog:allow-save",
+    "dialog:allow-confirm",
+    "dialog:allow-open",
+    "fs:allow-write-file",
+    "fs:allow-read-dir",
+    "fs:allow-remove",
+    "fs:allow-stat",
+    "fs:allow-mkdir",
+    "fs:allow-appdata-read-recursive",
+    "fs:allow-appdata-write-recursive",
+    "sparrow-storage:allow-pick-folder",
+    "sparrow-storage:allow-storage-access",
+    "sparrow-storage:allow-request-storage-access"
   ]
 }

@@ -1,0 +1,411 @@
+name: CI
+
+# 一个文件跑完四种事，靠触发器 + if 分流：
+#
+#   推 main / 开 PR   → web（类型 / lint / 测试 / 覆盖率）+ rust（cargo test + check）
+#   推 v* tag         → 桌面三平台 + iOS + 安卓，全部打包并挂到同一个 GitHub Release
+#   手动 Run workflow → 三端都打包，但只出 artifact，不发版（想只要某个包时也一样跑，
+#                      各 job 并行，谁先好谁的 artifact 先能下）
+#
+# 需要的 secrets（都不配也能跑，会退化）：
+#   ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASSWORD / ANDROID_KEY_ALIAS / ANDROID_KEY_PASSWORD
+#     → 有就出已签名 APK，没有就出 debug APK
+#   IOS_CERTIFICATE / IOS_CERTIFICATE_PASSWORD / IOS_MOBILE_PROVISION
+#     → 有就出可安装 IPA，没有就出未签名 IPA
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+    paths-ignore:
+      - "docs/**"
+      - "review/**"
+      - "**/*.md"
+      - ".gitignore"
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "review/**"
+      - "**/*.md"
+      - ".gitignore"
+  workflow_dispatch:
+
+# 同一 ref 上新的推送取消上一轮（tag 发版不取消，避免发一半）
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  # ---------------------------------------------------------------- 质量门禁
+  web:
+    name: 前端 · 类型 / lint / 测试 / 覆盖率
+    if: "!startsWith(github.ref, 'refs/tags/v')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci --no-audit --no-fund
+
+      - name: 类型检查
+        run: npx tsc --noEmit
+
+      - name: Lint（oxlint）
+        run: npm run lint
+
+      - name: 单元测试
+        run: npx vitest run
+
+      - name: 覆盖率（记录用，不设阈值卡合并）
+        run: npm run coverage
+
+      - name: 上传覆盖率
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  rust:
+    name: Rust · 构建与单元测试
+    if: "!startsWith(github.ref, 'refs/tags/v')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+
+      - name: 装 Tauri 的 Linux 依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            librsvg2-dev \
+            libayatana-appindicator3-dev \
+            patchelf
+
+      - name: 单元测试
+        working-directory: src-tauri
+        run: cargo test --lib
+
+      - name: 桌面端能编译
+        working-directory: src-tauri
+        run: cargo check --all-targets
+
+  # ---------------------------------------------------------------- 桌面
+  desktop:
+    name: 桌面 · ${{ matrix.label }}
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: Windows x64
+            slug: windows-x64
+            os: windows-latest
+            args: ""
+            rustTargets: ""
+          - label: macOS Apple Silicon
+            slug: macos-arm64
+            os: macos-latest
+            args: "--target aarch64-apple-darwin"
+            rustTargets: "aarch64-apple-darwin"
+          - label: Linux x64
+            slug: linux-x64
+            os: ubuntu-22.04
+            args: ""
+            rustTargets: ""
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rustTargets }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+          key: ${{ matrix.label }}
+
+      - name: 装 Tauri 的 Linux 依赖
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            librsvg2-dev \
+            libayatana-appindicator3-dev \
+            patchelf
+
+      - name: 安装依赖
+        run: npm ci --no-audit --no-fund
+
+      - name: 类型检查
+        run: npx tsc --noEmit
+
+      # 只打包，不碰 Release：所有上传都集中在最后的 publish job，一处说了算
+      - name: 打包
+        uses: tauri-apps/tauri-action@action-v1.0.0
+        with:
+          args: ${{ matrix.args }}
+
+      - name: 上传安装包（供 publish 汇总）
+        uses: actions/upload-artifact@v7
+        with:
+          name: desktop-${{ matrix.slug }}
+          path: |
+            src-tauri/target/release/bundle/**
+            src-tauri/target/*/release/bundle/**
+          retention-days: 7
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------- iOS
+  # 有证书 → ad-hoc IPA（可直接安装）；没证书 → 未签名 IPA（越狱机或重签工具用）。
+  # 未签名 IPA 的本质就是 Payload/<App>.app 压成 zip。
+  ios:
+    name: iOS · IPA
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: macos-latest
+    timeout-minutes: 60
+    env:
+      IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
+      IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+      IOS_MOBILE_PROVISION: ${{ secrets.IOS_MOBILE_PROVISION }}
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+          key: ios
+
+      - name: 安装依赖
+        run: npm ci --no-audit --no-fund
+
+      - name: 生成 iOS 工程（gen/apple 不入库，每次现生成）
+        run: npx tauri ios init
+
+      - name: 不签名 IPA
+        if: env.IOS_CERTIFICATE == ''
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd src-tauri/gen/apple
+
+          if ls -d *.xcworkspace >/dev/null 2>&1; then
+            W="$(ls -d *.xcworkspace | head -1)"; TARGET_ARGS="-workspace $W"
+            LIST="$(xcodebuild -list -workspace "$W" 2>/dev/null || true)"; DEFAULT="${W%.xcworkspace}"
+          else
+            P="$(ls -d *.xcodeproj | head -1)"; TARGET_ARGS="-project $P"
+            LIST="$(xcodebuild -list -project "$P" 2>/dev/null || true)"; DEFAULT="${P%.xcodeproj}"
+          fi
+          SCHEME="$(printf '%s\n' "$LIST" | awk '/Schemes:/{f=1;next} f&&NF{print $1; exit}')"
+          SCHEME="${SCHEME:-$DEFAULT}"
+          echo "scheme=$SCHEME"
+
+          xcodebuild $TARGET_ARGS -scheme "$SCHEME" -configuration release -sdk iphoneos \
+            -derivedDataPath "$PWD/build" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" CODE_SIGN_ENTITLEMENTS="" \
+            build | tail -n 80
+
+          APP="$(ls -d build/Build/Products/Release-iphoneos/*.app | head -1)"
+          OUT="$GITHUB_WORKSPACE/dist"
+          mkdir -p "$OUT/Payload"
+          cp -R "$APP" "$OUT/Payload/"
+          VER="$(node -p "require('$GITHUB_WORKSPACE/package.json').version")"
+          ( cd "$OUT" && zip -qry "sparrow-note-${VER}-ios-unsigned.ipa" Payload )
+          rm -rf "$OUT/Payload"
+          ls -lh "$OUT"
+
+      - name: 已签名 IPA
+        if: env.IOS_CERTIFICATE != ''
+        run: |
+          npx tauri ios build --export-method ad-hoc
+          mkdir -p dist
+          find src-tauri/gen/apple -name "*.ipa" -exec cp {} dist/ \;
+          cd dist && for f in *.ipa; do mv "$f" "sparrow-note-${GITHUB_REF_NAME#v}-$f"; done
+          ls -lh dist
+
+      - name: 上传 IPA
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-ipa
+          path: dist/*.ipa
+          retention-days: 14
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------- 安卓
+  android:
+    name: 安卓 · 通用 APK
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+          key: android
+
+      - name: 安装依赖
+        run: npm ci --no-audit --no-fund
+
+      # 缺 SDK 组件时由 Gradle 自己下（AGP 默认允许）
+      - name: 接受 Android 许可
+        run: yes | sdkmanager --licenses > /dev/null || true
+
+      - name: 打 release APK
+        if: env.KS_B64 != ''
+        run: npx tauri android build --apk
+
+      - name: 用 keystore 签名
+        if: env.KS_B64 != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          mkdir -p dist
+          printf '%s' "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          shopt -s nullglob
+          for apk in src-tauri/gen/android/app/build/outputs/apk/*/release/*-unsigned.apk; do
+            name="$(basename "$apk" -unsigned.apk)"; abi="${name#app-}"; abi="${abi%-release}"
+            out="$PWD/dist/sparrow-note-${GITHUB_REF_NAME#v}-${abi}.apk"
+            "$BT/zipalign" -p -f 4 "$apk" "$RUNNER_TEMP/aligned.apk"
+            "$BT/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-key-alias "$KEY_ALIAS" \
+              --ks-pass "pass:$KS_PASS" --key-pass "pass:$KEY_PASS" \
+              --out "$out" "$RUNNER_TEMP/aligned.apk"
+            "$BT/apksigner" verify "$out"
+          done
+
+      - name: 没配密钥时改用调试包
+        if: env.KS_B64 == ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx tauri android build --apk --debug
+          mkdir -p dist
+          cp src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk \
+            "dist/sparrow-note-${GITHUB_REF_NAME#v}-android-debug.apk"
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-apk
+          path: dist/*.apk
+          retention-days: 14
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------- 挂到 Release
+  # 桌面包由 tauri-action 自己传；移动端两个包在这里合并上传，避免几个 job 抢着建 Release
+  # ---------------------------------------------------------------- 发布
+  # 唯一的「上传」入口：把三个平台 + iOS + 安卓的产物全下载下来，一次性发到同一个 Release。
+  # 这样 Release 的名字、说明、prerelease 判断只有一处，也不会有几个 job 抢着建 Release。
+  publish:
+    name: 发布 · 汇总所有安装包
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [desktop, ios, android]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 下载桌面安装包
+        uses: actions/download-artifact@v8
+        with:
+          pattern: desktop-*
+          path: assets
+          merge-multiple: true
+
+      - name: 下载 iOS 包
+        uses: actions/download-artifact@v8
+        with:
+          name: ios-ipa
+          path: assets
+
+      - name: 下载安卓包
+        uses: actions/download-artifact@v8
+        with:
+          name: android-apk
+          path: assets
+
+      - name: 清点产物
+        run: |
+          find assets -type f | sort
+          echo "文件数：$(find assets -type f | wc -l)"
+
+      - name: 发到 Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: 麻雀记 ${{ github.ref_name }}
+          body: |
+            桌面端、安卓、iOS 安装包都在下方 Assets。
+
+            - Windows：`*_x64-setup.exe`
+            - macOS：`*.dmg`（Apple Silicon）
+            - Linux：`*.AppImage` / `*.deb`
+            - 安卓：`*-universal.apk`（有密钥时已签名；没有则是 `-debug` 包）
+            - iOS：`*-ios-unsigned.ipa`（未签名，需用 AltStore / Sideloadly 重签后才能装）
+
+            装好后打开「我的 → 关于 → 检查更新」就能收到新版本。
+          files: assets/**
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
+          fail_on_unmatched_files: true

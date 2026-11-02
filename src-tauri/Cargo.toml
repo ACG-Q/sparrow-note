@@ -21,6 +21,13 @@ tauri-plugin-log = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 tauri-plugin-notification = "2"
 tauri-plugin-geolocation = "2"
+# 移动端导出：dialog 出系统「另存为」，fs 把字节真正写到用户选的位置。
+# Android WebView 不认 `<a download>`，blob 下载既不落盘也不报错。
+# 版本写死，保证解析到的就是下面 vendor 目录里那份（否则 [patch] 会变成 unused）。
+tauri-plugin-dialog = "=2.8.4"
+tauri-plugin-fs = "=2.7.1"
+# 自己写的：安卓上选数据目录（plugin-dialog 在移动端不支持目录选择器）
+tauri-plugin-sparrow-storage = { path = "plugins/tauri-plugin-sparrow-storage" }
 
 # MCP bridge 只用于桌面调试：它引用了 WebviewWindow::minimize / maximize，
 # 这两个方法在安卓上没有，编译会直接报错。
@@ -36,8 +43,11 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 [profile.dev]
 debug = false
 
-# 火绒会拦「编译脚本往 cargo 缓存里写」，geolocation 插件的 build.rs 正好要写，
-# 把插件放进项目里编译，写入就发生在项目目录内。
+# 火绒会拦「编译脚本往 cargo 缓存里写」：这几个插件的 build.rs 都要在包目录里
+# 写 permissions/、android/.tauri 之类的文件，而 cargo 把依赖源码放在 %USERPROFILE%\.cargo，
+# HIPS 直接拒写。把插件放进项目里编译，写入就发生在项目目录内。
 [patch.crates-io]
 tauri-plugin-geolocation = { path = "vendor/tauri-plugin-geolocation" }
 tauri-plugin-notification = { path = "vendor/tauri-plugin-notification" }
+tauri-plugin-dialog = { path = "vendor/tauri-plugin-dialog" }
+tauri-plugin-fs = { path = "vendor/tauri-plugin-fs" }

@@ -345,9 +345,14 @@ export function NoteReader({ note }: { note: NoteDoc }) {
         const table = tableRows(b.content);
         if (!table) return null;
         const rows = table.rows;
+        // 列数告诉 CSS：表格默认填满正文栏，但列多到每列不足最小可读宽度时才横向滚动
+        const cols = rows.reduce(
+          (max, row) => Math.max(max, row.reduce((sum, cell) => sum + Math.max(1, cell.colspan), 0)),
+          1,
+        );
         return (
           <div key={key} className={s.tableWrap}>
-            <table className={s.table}>
+            <table className={s.table} style={{ ["--cols" as string]: String(cols) }}>
               <tbody>
                 {rows.map((row, ri) => (
                   <tr key={ri}>

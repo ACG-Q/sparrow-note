@@ -20,7 +20,9 @@ export type PermissionRow = {
 
 const STATE_TEXT: Record<PermState, string> = {
   granted: "已允许",
-  prompt: "未申请",
+  // 安卓 WebView 查不到麦克风/相机的授权状态，只能说「还没确认」——
+  // 点一次「申请权限」就知道：已允许会直接通过，不再弹窗
+  prompt: "待授权",
   denied: "已拒绝",
   unsupported: "不适用",
   unknown: "未知",
@@ -28,6 +30,72 @@ const STATE_TEXT: Record<PermState, string> = {
 
 export function stateText(s: PermState): string {
   return STATE_TEXT[s];
+}
+
+/**
+ * 界面上该显示成什么状态。
+ * WebView 里 `navigator.permissions.query({name:"microphone"})` 常年抛不支持，
+ * 探出来就是 unknown——对「能申请」的能力来说，说「未申请」比「未知」有用得多；
+ * 真正不支持的能力才保留原文案。
+ */
+export function effectiveState(state: PermState, canRequest: boolean): PermState {
+  if (state === "unknown" && canRequest) return "prompt";
+  return state;
+}
+
+export type PermSummary = {
+  /** 已允许 */
+  granted: number;
+  /** 待申请（能申请、还没结果） */
+  pending: number;
+  /** 被系统拒绝 */
+  blocked: number;
+  /** 不适用 / 不需要申请 */
+  fixed: number;
+};
+
+/** 顶部那条汇总：一眼看出还有几件事要做 */
+export function summarize(
+  rows: PermissionRow[],
+  states: Partial<Record<PermissionId, PermState>>,
+): PermSummary {
+  const out: PermSummary = { granted: 0, pending: 0, blocked: 0, fixed: 0 };
+  for (const row of rows) {
+    const st = effectiveState(states[row.id] ?? "unknown", row.canRequest);
+    if (st === "granted") out.granted += 1;
+    else if (st === "denied") out.blocked += 1;
+    else if (row.canRequest) out.pending += 1;
+    else out.fixed += 1;
+  }
+  return out;
+}
+
+/** 「全部申请」要挨个问哪些：能申请的、还没拿到的（被拒绝的不再自动重问，那是系统设置的事） */
+export function pendingIds(
+  rows: PermissionRow[],
+  states: Partial<Record<PermissionId, PermState>>,
+): PermissionId[] {
+  return rows
+    .filter((row) => {
+      if (!row.canRequest) return false;
+      const st = effectiveState(states[row.id] ?? "unknown", row.canRequest);
+      return st !== "granted" && st !== "denied";
+    })
+    .map((row) => row.id);
+}
+
+/** 申请结束后的结果文案（如实描述，不粉饰） */
+export function resultText(id: PermissionId, after: PermState): string {
+  switch (after) {
+    case "granted":
+      return id === "notification" ? "已允许，之后到期会提醒你。" : "已允许，现在可以用了。";
+    case "denied":
+      return "系统拒绝了。若之前勾过「不再询问」，只能去系统设置里手动打开。";
+    case "unsupported":
+      return "这个平台不支持申请，换一种方式吧。";
+    default:
+      return "没有拿到明确结果——可能之前选过「不再询问」，去系统设置里看一眼。";
+  }
 }
 
 type PermName = "geolocation" | "microphone" | "camera" | "notifications";
@@ -194,7 +262,7 @@ export function permissionRows(platform: Platform): PermissionRow[] {
     state: "unknown",
     canRequest: true,
     note: mobile
-      ? "Android / iOS 首次录音会弹系统授权。"
+      ? "WebView 查不到麦克风是否已授权，所以这里只能显示「待授权」。点一次「申请权限」确认：已允许会直接通过，不会再弹窗。"
       : desktop
         ? "桌面壳已放行 WebView 的请求；如果还是没声音，多半是系统层把它关了。"
         : undefined,
@@ -208,7 +276,9 @@ export function permissionRows(platform: Platform): PermissionRow[] {
     usedBy: "扫码对话框",
     state: "unknown",
     canRequest: true,
-    note: mobile ? "用于扫码；同样会在第一次打开扫码时弹授权。" : undefined,
+    note: mobile
+      ? "同样查不到已授权状态；用于扫码，第一次打开扫码时会弹系统授权。"
+      : undefined,
     fixHint: fix,
   });
 

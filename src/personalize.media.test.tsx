@@ -38,7 +38,10 @@ vi.mock("./lib/theme", () => ({
   resolveDark: () => false,
   nextThemePref: () => "light",
 }));
-vi.mock("./lib/download", () => ({ saveImageAs: async () => {} }));
+vi.mock("./lib/download", () => ({
+  // 保存结果按新契约返回：界面要靠它区分「已保存 / 已取消 / 失败」
+  saveImageAs: async () => ({ status: "saved", name: "图.png", via: "browser" }),
+}));
 vi.mock("./lib/useTotp", () => ({ useTotp: () => ({ code: "123456", remain: 20 }) }));
 
 import { AccountCard } from "./components/AccountCard";
@@ -89,13 +92,13 @@ describe("MediaLightbox", () => {
     expect(container.querySelector("video")).not.toBeNull();
   });
 
-  it("保存按钮会提示状态", async () => {
+  it("保存成功后按钮显示「已保存」", async () => {
     const { container } = render(
       <MediaLightbox media={{ kind: "image", url: "data:image/png;base64,xx" }} onClose={() => {}} />,
     );
     const btn = [...container.querySelectorAll("button")].find((b) => /保存|下载|存/.test(b.textContent || ""));
     btn?.click();
-    await waitFor(() => expect((container.textContent || "").length).toBeGreaterThan(2));
+    await waitFor(() => expect(container.textContent).toContain("已保存"));
   });
 });
 
