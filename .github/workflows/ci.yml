@@ -175,10 +175,13 @@ jobs:
         run: npx tsc --noEmit
 
       # 只打包，不碰 Release：所有上传都集中在最后的 publish job，一处说了算
-      - name: 打包
+      - name: 打包（产物由 tauri-action 自己上传成 artifact）
         uses: tauri-apps/tauri-action@action-v1.0.0
         with:
           args: ${{ matrix.args }}
+          # 让 action 自己把安装包传成 workflow artifact：它内部知道产物路径，
+          # 我们不用再去猜 src-tauri/target 在哪（踩过：构建目录在下一步已经不存在了）
+          uploadWorkflowArtifacts: true
 
       # 按各平台真实的产物子目录取文件（upload-artifact 的通配符在 Linux/macOS 上一个都没匹配到，
       # 三个平台的包装不出来就是这个原因）：
@@ -190,75 +193,6 @@ jobs:
       #   Windows: <bundle>/nsis/*-setup.exe（有的话再加 msi）
       #   macOS:   <bundle>/dmg/*.dmg
       #   Linux:   <bundle>/deb/*.deb、<bundle>/rpm/*.rpm、<bundle>/appimage/*.AppImage
-      # 各平台真实产物在 <repo>/src-tauri/target[/<target>]/release/bundle/{nsis,msi,dmg,deb,rpm,appimage}。
-      # 但步骤的 cwd / 路径前缀在 CI 上不保证（踩过：相对路径 ls 不到、macOS bash 3.2 空数组报错），
-      # 所以这里两手准备：先按矩阵给的目录找，找不到就在 runner 的 work 目录里按文件名搜。
-      - name: 收集安装包
-        shell: bash
-        run: |
-          set -uo pipefail
-          rm -rf out
-          mkdir -p out
-
-          SUB="${{ matrix.bundleDir }}"
-          echo "GITHUB_WORKSPACE=${GITHUB_WORKSPACE:-<empty>}"
-          echo "PWD=$PWD"
-
-          B=""
-          for root in "${GITHUB_WORKSPACE:-}" "$PWD" "${GITHUB_WORKSPACE:-}/.." "$PWD/.."; do
-            if [ -n "$root" ] && [ -d "$root/$SUB" ]; then
-              B="$root/$SUB"
-              break
-            fi
-          done
-          echo "bundleDir=[${B:-<未命中>}]"
-
-          # 命中就按标准子目录收
-          if [ -n "$B" ]; then
-            ls -R "$B" 2>&1 | head -60 || true
-            for dir in nsis msi dmg deb rpm appimage; do
-              shopt -s nullglob
-              for f in "$B"/$dir/*; do
-                case "$f" in
-                  *.exe|*.msi|*.dmg|*.deb|*.rpm|*.AppImage) cp -v -- "$f" out/ || true ;;
-                esac
-              done
-              shopt -u nullglob
-            done
-          fi
-
-          # 兜底：直接在整个 runner work 目录里按文件名搜（不依赖任何路径假设）
-          if [ "$(ls -1 out 2>/dev/null | wc -l | tr -d ' ')" -eq 0 ]; then
-            echo "按目录没收到，改为全盘按文件名搜…"
-            for root in /home/runner/work /Users/runner/work; do
-              if [ -d "$root" ]; then
-                find "$root" -maxdepth 9 -type f \
-                  \( -name "sparrow-note*.exe" -o -name "sparrow-note*.msi" -o -name "sparrow-note*.dmg" \
-                     -o -name "sparrow-note*.deb" -o -name "sparrow-note*.rpm" -o -name "sparrow-note*.AppImage" \) \
-                  -exec cp -v -- {} out/ \; 2>/dev/null || true
-              fi
-            done
-          fi
-
-          echo "---- out ----"
-          ls -lh out || true
-          n=$(ls -1 out 2>/dev/null | wc -l | tr -d " ")
-          echo "文件数：$n"
-          if [ "$n" -eq 0 ]; then
-            echo "::error::收集失败。GITHUB_WORKSPACE=${GITHUB_WORKSPACE:-<empty>} PWD=$PWD bundleDir=[${B:-<未命中>}]"
-            echo "::error::workspace 顶层：$(ls -A "${GITHUB_WORKSPACE:-.}" 2>/dev/null | tr '\n' ' ' | cut -c1-400)"
-            echo "::error::找到的 bundle 目录：$(find "${GITHUB_WORKSPACE:-.}" -maxdepth 6 -type d -name bundle 2>/dev/null | tr '\n' ' ' | cut -c1-400)"
-            exit 1
-          fi
-
-      - name: 上传安装包（供 publish 汇总）
-        uses: actions/upload-artifact@v7
-        with:
-          name: desktop-${{ matrix.slug }}
-          path: out/**
-          retention-days: 7
-          if-no-files-found: error
-
   # ---------------------------------------------------------------- iOS
   # 有证书 → ad-hoc IPA（可直接安装）；没证书 → 未签名 IPA（越狱机或重签工具用）。
   # 未签名 IPA 的本质就是 Payload/<App>.app 压成 zip。
@@ -473,12 +407,24 @@ jobs:
     needs: [desktop, ios, android]
     runs-on: ubuntu-latest
     steps:
-      - name: 下载桌面安装包
+      - name: 下载全部 artifact（含 tauri-action 传的安装包）
         uses: actions/download-artifact@v8
         with:
-          pattern: desktop-*
+          pattern: "*"
           path: assets
           merge-multiple: true
+
+      - name: 筛出安装包
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p dist
+          find assets -type f \
+            \( -name "*.exe" -o -name "*.msi" -o -name "*.dmg" \
+               -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) \
+            -exec cp -v -- {} dist/ \; 2>/dev/null || true
+          echo "---- dist ----"
+          ls -lh dist || true
 
       - name: 下载 iOS 包
         # iOS 构建失败时这个 artifact 不存在，不能让整个发布跟着塌
@@ -497,14 +443,14 @@ jobs:
 
       - name: 清点产物
         run: |
-          find assets -type f | sort
-          n=$(find assets -type f | wc -l)
+          find dist -type f | sort
+          n=$(find dist -type f | wc -l)
           echo "文件数：$n"
           if [ "$n" -eq 0 ]; then
             echo "::error::一个安装包都没打出来，不发 Release"
             exit 1
           fi
-          if ! ls assets/*.ipa >/dev/null 2>&1; then
+          if ! ls dist/*.ipa >/dev/null 2>&1; then
             echo "::warning::没有 iOS 包（iOS job 失败或没配签名），这次 Release 只有桌面/安卓"
           fi
 
@@ -523,7 +469,7 @@ jobs:
             - iOS：`*-ios-unsigned.ipa`（未签名，需用 AltStore / Sideloadly 重签后才能装）
 
             装好后打开「我的 → 关于 → 检查更新」就能收到新版本。
-          files: assets/**
+          files: dist/*
           draft: false
           prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
           fail_on_unmatched_files: true
