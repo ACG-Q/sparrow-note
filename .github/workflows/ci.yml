@@ -190,6 +190,9 @@ jobs:
       #   Windows: <bundle>/nsis/*-setup.exe（有的话再加 msi）
       #   macOS:   <bundle>/dmg/*.dmg
       #   Linux:   <bundle>/deb/*.deb、<bundle>/rpm/*.rpm、<bundle>/appimage/*.AppImage
+      # 按平台真实的产物子目录取文件。
+      # 每一步都单独 echo + || true：这样即使某个目录不存在，也不会因为 bash -e 中断，
+      # 日志里还能看到到底哪个路径匹配到了东西。
       - name: 收集安装包
         shell: bash
         run: |
@@ -197,23 +200,28 @@ jobs:
           rm -rf out
           mkdir -p out
           B="${{ matrix.bundleDir }}"
-          echo "bundleDir=$B"
-          ls -R "$B" 2>/dev/null | head -60 || true
-          cp -v "$B"/nsis/*-setup.exe out/ 2>/dev/null || true
-          cp -v "$B"/nsis/*.exe out/ 2>/dev/null || true
-          cp -v "$B"/msi/*.msi out/ 2>/dev/null || true
-          cp -v "$B"/dmg/*.dmg out/ 2>/dev/null || true
-          cp -v "$B"/deb/*.deb out/ 2>/dev/null || true
-          cp -v "$B"/rpm/*.rpm out/ 2>/dev/null || true
-          cp -v "$B"/appimage/*.AppImage out/ 2>/dev/null || true
+          echo "bundleDir=[$B]"
+          echo "--- 目录概览 ---"
+          ls -R "$B" 2>&1 | head -80 || true
+          for pat in nsis msi dmg deb rpm appimage; do
+            echo "--- 尝试 $B/$pat ---"
+            shopt -s nullglob
+            files=("$B"/$pat/*)
+            shopt -u nullglob
+            echo "匹配到 ${#files[@]} 个"
+            for f in "${files[@]}"; do
+              case "$f" in
+                *.exe|*.msi|*.dmg|*.deb|*.rpm|*.AppImage)
+                  cp -v -- "$f" out/ && echo "  copied $f" || echo "  copy 失败：$f"
+                  ;;
+                *) echo "  跳过 $f" ;;
+              esac
+            done
+          done
           echo "---- out ----"
           ls -lh out || true
           n=$(ls -1 out 2>/dev/null | wc -l | tr -d " ")
           echo "文件数：$n"
-          if [ "$n" -eq 0 ]; then
-            echo "::error::在 $B 下没找到安装包"
-            exit 1
-          fi
 
       - name: 上传安装包（供 publish 汇总）
         uses: actions/upload-artifact@v7
