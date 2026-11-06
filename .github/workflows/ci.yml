@@ -190,40 +190,67 @@ jobs:
       #   Windows: <bundle>/nsis/*-setup.exe（有的话再加 msi）
       #   macOS:   <bundle>/dmg/*.dmg
       #   Linux:   <bundle>/deb/*.deb、<bundle>/rpm/*.rpm、<bundle>/appimage/*.AppImage
-      # 按平台真实的产物子目录取文件。
-      # 两个坑都踩过：
-      #   1) macOS runner 是 bash 3.2，set -u 下展开空数组 "${files[@]}" 会报 unbound variable；
-      #   2) 相对路径在不同步骤的 cwd 下不保证一致，统一用 $GITHUB_WORKSPACE 拼绝对路径。
+      # 各平台真实产物在 <repo>/src-tauri/target[/<target>]/release/bundle/{nsis,msi,dmg,deb,rpm,appimage}。
+      # 踩过的三个坑，这里全避开：
+      #   1) 步骤的 cwd 不一定是仓库根 → 从候选根目录里找，找不到就 find 兜底；
+      #   2) macOS runner 是 bash 3.2，set -u 下展开空数组会报 unbound variable → 不用数组；
+      #   3) GitHub 的 bash 默认带 -e → 所有可能失败的语句都包在 if / || true 里。
       - name: 收集安装包
         shell: bash
         run: |
           set -uo pipefail
           rm -rf out
           mkdir -p out
-          B="$GITHUB_WORKSPACE/${{ matrix.bundleDir }}"
+
+          SUB="${{ matrix.bundleDir }}"
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          echo "PWD=$PWD"
+
+          B=""
+          for root in "$GITHUB_WORKSPACE" "$PWD" "$GITHUB_WORKSPACE/.." "$PWD/.." /home/runner/work /Users/runner/work; do
+            if [ -n "$root" ] && [ -d "$root/$SUB" ]; then
+              B="$root/$SUB"
+              break
+            fi
+          done
+
+          if [ -z "$B" ]; then
+            echo "常规位置没命中，开始在 workspace 里搜 bundle 目录…"
+            B="$(find "$GITHUB_WORKSPACE" -maxdepth 6 -type d -name bundle 2>/dev/null | head -1)"
+          fi
+
           echo "bundleDir=[$B]"
-          echo "--- 目录概览 ---"
-          ls -R "$B" 2>&1 | head -80 || true
+          if [ -z "$B" ]; then
+            echo "::error::找不到 bundle 目录，无法收集安装包"
+            ls -la "$GITHUB_WORKSPACE" || true
+            exit 1
+          fi
+          ls -R "$B" 2>&1 | head -60 || true
 
           for dir in nsis msi dmg deb rpm appimage; do
-            echo "--- 尝试 $B/$dir ---"
             found=0
             shopt -s nullglob
             for f in "$B"/$dir/*; do
               case "$f" in
                 *.exe|*.msi|*.dmg|*.deb|*.rpm|*.AppImage)
-                  if cp -v -- "$f" out/; then found=$((found + 1)); fi
+                  if cp -v -- "$f" out/; then
+                    found=$((found + 1))
+                  fi
                   ;;
               esac
             done
             shopt -u nullglob
-            echo "收集到 $found 个"
+            echo "$dir: 收集到 $found 个"
           done
 
           echo "---- out ----"
           ls -lh out || true
           n=$(ls -1 out 2>/dev/null | wc -l | tr -d " ")
           echo "文件数：$n"
+          if [ "$n" -eq 0 ]; then
+            echo "::error::找到了 $B 但没有可发布的安装包"
+            exit 1
+          fi
 
       - name: 上传安装包（供 publish 汇总）
         uses: actions/upload-artifact@v7
