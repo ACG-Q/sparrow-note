@@ -191,10 +191,8 @@ jobs:
       #   macOS:   <bundle>/dmg/*.dmg
       #   Linux:   <bundle>/deb/*.deb、<bundle>/rpm/*.rpm、<bundle>/appimage/*.AppImage
       # 各平台真实产物在 <repo>/src-tauri/target[/<target>]/release/bundle/{nsis,msi,dmg,deb,rpm,appimage}。
-      # 踩过的三个坑，这里全避开：
-      #   1) 步骤的 cwd 不一定是仓库根 → 从候选根目录里找，找不到就 find 兜底；
-      #   2) macOS runner 是 bash 3.2，set -u 下展开空数组会报 unbound variable → 不用数组；
-      #   3) GitHub 的 bash 默认带 -e → 所有可能失败的语句都包在 if / || true 里。
+      # 但步骤的 cwd / 路径前缀在 CI 上不保证（踩过：相对路径 ls 不到、macOS bash 3.2 空数组报错），
+      # 所以这里两手准备：先按矩阵给的目录找，找不到就在 runner 的 work 目录里按文件名搜。
       - name: 收集安装包
         shell: bash
         run: |
@@ -203,52 +201,53 @@ jobs:
           mkdir -p out
 
           SUB="${{ matrix.bundleDir }}"
-          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          echo "GITHUB_WORKSPACE=${GITHUB_WORKSPACE:-<empty>}"
           echo "PWD=$PWD"
 
           B=""
-          for root in "$GITHUB_WORKSPACE" "$PWD" "$GITHUB_WORKSPACE/.." "$PWD/.." /home/runner/work /Users/runner/work; do
+          for root in "${GITHUB_WORKSPACE:-}" "$PWD" "${GITHUB_WORKSPACE:-}/.." "$PWD/.."; do
             if [ -n "$root" ] && [ -d "$root/$SUB" ]; then
               B="$root/$SUB"
               break
             fi
           done
+          echo "bundleDir=[${B:-<未命中>}]"
 
-          if [ -z "$B" ]; then
-            echo "常规位置没命中，开始在 workspace 里搜 bundle 目录…"
-            B="$(find "$GITHUB_WORKSPACE" -maxdepth 6 -type d -name bundle 2>/dev/null | head -1)"
-          fi
-
-          echo "bundleDir=[$B]"
-          if [ -z "$B" ]; then
-            echo "::error::找不到 bundle 目录，无法收集安装包"
-            ls -la "$GITHUB_WORKSPACE" || true
-            exit 1
-          fi
-          ls -R "$B" 2>&1 | head -60 || true
-
-          for dir in nsis msi dmg deb rpm appimage; do
-            found=0
-            shopt -s nullglob
-            for f in "$B"/$dir/*; do
-              case "$f" in
-                *.exe|*.msi|*.dmg|*.deb|*.rpm|*.AppImage)
-                  if cp -v -- "$f" out/; then
-                    found=$((found + 1))
-                  fi
-                  ;;
-              esac
+          # 命中就按标准子目录收
+          if [ -n "$B" ]; then
+            ls -R "$B" 2>&1 | head -60 || true
+            for dir in nsis msi dmg deb rpm appimage; do
+              shopt -s nullglob
+              for f in "$B"/$dir/*; do
+                case "$f" in
+                  *.exe|*.msi|*.dmg|*.deb|*.rpm|*.AppImage) cp -v -- "$f" out/ || true ;;
+                esac
+              done
+              shopt -u nullglob
             done
-            shopt -u nullglob
-            echo "$dir: 收集到 $found 个"
-          done
+          fi
+
+          # 兜底：直接在整个 runner work 目录里按文件名搜（不依赖任何路径假设）
+          if [ "$(ls -1 out 2>/dev/null | wc -l | tr -d ' ')" -eq 0 ]; then
+            echo "按目录没收到，改为全盘按文件名搜…"
+            for root in /home/runner/work /Users/runner/work; do
+              if [ -d "$root" ]; then
+                find "$root" -maxdepth 9 -type f \
+                  \( -name "sparrow-note*.exe" -o -name "sparrow-note*.msi" -o -name "sparrow-note*.dmg" \
+                     -o -name "sparrow-note*.deb" -o -name "sparrow-note*.rpm" -o -name "sparrow-note*.AppImage" \) \
+                  -exec cp -v -- {} out/ \; 2>/dev/null || true
+              fi
+            done
+          fi
 
           echo "---- out ----"
           ls -lh out || true
           n=$(ls -1 out 2>/dev/null | wc -l | tr -d " ")
           echo "文件数：$n"
           if [ "$n" -eq 0 ]; then
-            echo "::error::找到了 $B 但没有可发布的安装包"
+            echo "::error::收集失败。GITHUB_WORKSPACE=${GITHUB_WORKSPACE:-<empty>} PWD=$PWD bundleDir=[${B:-<未命中>}]"
+            echo "::error::workspace 顶层：$(ls -A "${GITHUB_WORKSPACE:-.}" 2>/dev/null | tr '\n' ' ' | cut -c1-400)"
+            echo "::error::找到的 bundle 目录：$(find "${GITHUB_WORKSPACE:-.}" -maxdepth 6 -type d -name bundle 2>/dev/null | tr '\n' ' ' | cut -c1-400)"
             exit 1
           fi
 
