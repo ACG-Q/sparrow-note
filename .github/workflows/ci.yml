@@ -191,33 +191,35 @@ jobs:
       #   macOS:   <bundle>/dmg/*.dmg
       #   Linux:   <bundle>/deb/*.deb、<bundle>/rpm/*.rpm、<bundle>/appimage/*.AppImage
       # 按平台真实的产物子目录取文件。
-      # 每一步都单独 echo + || true：这样即使某个目录不存在，也不会因为 bash -e 中断，
-      # 日志里还能看到到底哪个路径匹配到了东西。
+      # 两个坑都踩过：
+      #   1) macOS runner 是 bash 3.2，set -u 下展开空数组 "${files[@]}" 会报 unbound variable；
+      #   2) 相对路径在不同步骤的 cwd 下不保证一致，统一用 $GITHUB_WORKSPACE 拼绝对路径。
       - name: 收集安装包
         shell: bash
         run: |
           set -uo pipefail
           rm -rf out
           mkdir -p out
-          B="${{ matrix.bundleDir }}"
+          B="$GITHUB_WORKSPACE/${{ matrix.bundleDir }}"
           echo "bundleDir=[$B]"
           echo "--- 目录概览 ---"
           ls -R "$B" 2>&1 | head -80 || true
-          for pat in nsis msi dmg deb rpm appimage; do
-            echo "--- 尝试 $B/$pat ---"
+
+          for dir in nsis msi dmg deb rpm appimage; do
+            echo "--- 尝试 $B/$dir ---"
+            found=0
             shopt -s nullglob
-            files=("$B"/$pat/*)
-            shopt -u nullglob
-            echo "匹配到 ${#files[@]} 个"
-            for f in "${files[@]}"; do
+            for f in "$B"/$dir/*; do
               case "$f" in
                 *.exe|*.msi|*.dmg|*.deb|*.rpm|*.AppImage)
-                  cp -v -- "$f" out/ && echo "  copied $f" || echo "  copy 失败：$f"
+                  if cp -v -- "$f" out/; then found=$((found + 1)); fi
                   ;;
-                *) echo "  跳过 $f" ;;
               esac
             done
+            shopt -u nullglob
+            echo "收集到 $found 个"
           done
+
           echo "---- out ----"
           ls -lh out || true
           n=$(ls -1 out 2>/dev/null | wc -l | tr -d " ")
