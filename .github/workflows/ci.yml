@@ -250,67 +250,46 @@ jobs:
           npx tauri ios build --export-method ad-hoc
           mkdir -p dist
           find src-tauri/gen/apple -name "*.ipa" -exec cp {} dist/ \;
-      # 无签名的 iOS 包：tauri CLI 必须自己驱动 xcodebuild（工程脚本要连运行中的 CLI，
-      # 直连 xcodebuild 会缺 cli-options-server.json）。
-      # 但 iOS 的 release 构建最后会走 -exportArchive，没证书必然失败——**exit code 70 是预期的**，
-      # 编译产物 .app 已经在 DerivedData 里了。所以：接受非零退出码，只要捞到 .app 就算成功。
-      # 另外 --no-sign 在 iOS 子命令上不生效（那是桌面端的开关），只能靠 pbxproj + 环境变量关签名。
-      - name: 没证书 → 未签名 IPA（接受 exit 70，手动捞 .app 打包）
+      # 没有证书时的 iOS 这一步，分两段，各自独立成败：
+      #   1) cargo build --lib --target aarch64-apple-ios：真机架构的编译校验，简单可靠；
+      #   2) 模拟器包（--target aarch64-sim）：模拟器不需要签名，Tauri 会跳过 IPA 导出。
+      # 为什么不做"未签名真机 IPA"：tauri ios build 的 iOS 导出阶段必须要签名身份，
+      # 拿不到 `.app` 时只能算失败；真机可安装的包必须配 Apple 证书（见文档）。
+      - name: 没证书 → 真机架构编译校验 + 模拟器包
         if: env.IOS_CERTIFICATE == ''
         shell: bash
         run: |
           set -uo pipefail
 
-          echo "--- 关掉工程里的签名配置 ---"
-          PBX="$(ls src-tauri/gen/apple/*.xcodeproj/project.pbxproj 2>/dev/null | head -1 || true)"
-          echo "pbxproj=[$PBX]"
-          if [ -n "${PBX:-}" ]; then
-            sed -i.bak 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' "$PBX"
-            sed -i.bak 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "";/g' "$PBX"
-            sed -i.bak 's/DEVELOPMENT_TEAM = .*;/DEVELOPMENT_TEAM = "";/g' "$PBX"
-            grep -c "CODE_SIGN_IDENTITY" "$PBX" || true
-          fi
+          echo "=== 1/2 真机架构编译校验（aarch64-apple-ios）==="
+          cargo build --lib --release --target aarch64-apple-ios --manifest-path src-tauri/Cargo.toml
+          echo "Rust 侧 iOS 真机架构编译通过"
 
-          export CODE_SIGNING_ALLOWED=NO
-          export CODE_SIGNING_REQUIRED=NO
-          export CODE_SIGN_IDENTITY=""
-          export CODE_SIGN_ENTITLEMENTS=""
-
-          echo "--- tauri ios build --debug ---"
+          echo "=== 2/2 模拟器包（不需要签名，装不到真机）==="
+          mkdir -p dist
           set +e
-          npx tauri ios build --debug
-          code=$?
+          npx tauri ios build --debug --target aarch64-sim
+          simcode=$?
           set -e
-          echo "tauri ios build 退出码：$code（70 = 导出阶段失败，属预期）"
+          echo "模拟器构建退出码：$simcode"
 
-          echo "--- 找 .app ---"
-          find src-tauri/gen/apple -maxdepth 6 -type d -name "*.app" 2>/dev/null || true
           APP="$(ls -dt $(find src-tauri/gen/apple "$HOME/Library/Developer/Xcode/DerivedData" \
-                    -type d -name "*.app" 2>/dev/null) 2>/dev/null | head -1)"
-          echo "app=[$APP]"
+                  -type d -name "*.app" 2>/dev/null) 2>/dev/null | head -1)"
+          echo "app=[${APP:-<未找到>}]"
 
-          if [ -z "${APP:-}" ]; then
-            echo "::error::没找到 .app（tauri ios build 退出码 $code）——这才是真失败"
-            ls -R src-tauri/gen/apple 2>/dev/null | head -40 || true
-            exit 1
-          fi
-
-          mkdir -p dist/Payload
-          cp -R "$APP" dist/Payload/
-          VER="$(node -p "require('./package.json').version")"
-          ( cd dist && zip -qry "sparrow-note-${VER}-ios-unsigned.ipa" Payload )
-          rm -rf dist/Payload
-          ls -lh dist
-
-          if [ "$code" -ne 0 ] && [ "$code" -ne 70 ]; then
-            echo "::warning::tauri ios build 返回 $code（不是 70），但产物已拿到，继续"
+          if [ -n "${APP:-}" ]; then
+            VER="$(node -p "require('./package.json').version")"
+            zip -qry "dist/sparrow-note-${VER}-ios-simulator.app.zip" "$APP"
+            ls -lh dist
+          else
+            echo "::warning::没拿到模拟器 .app（退出码 $simcode），只保留编译校验结果"
           fi
 
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ios-ipa
-          path: dist/*.ipa
+          path: dist/*
           retention-days: 14
           if-no-files-found: warn
 
