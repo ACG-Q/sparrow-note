@@ -250,33 +250,37 @@ jobs:
           npx tauri ios build --export-method ad-hoc
           mkdir -p dist
           find src-tauri/gen/apple -name "*.ipa" -exec cp {} dist/ \;
-      - name: 没证书 → 未签名 IPA（Payload/<App>.app 打包）
+      # 关键：不能自己调 xcodebuild。工程里 "Build Rust Code" 阶段会回调
+      # `tauri ios xcode-script`，它要连一个正在跑的 `tauri ios build` 进程
+      # （读 gen/apple/.tauri/cli-options-server.json）——直连 xcodebuild 必然失败。
+      # 所以仍然让 tauri CLI 驱动构建，只是把签名关掉；出的是 .app，再自己压成 ipa。
+      - name: 没证书 → 未签名 IPA（tauri ios build --debug + Payload 打包）
         if: env.IOS_CERTIFICATE == ''
         shell: bash
         run: |
           set -euxo pipefail
-          B="$(ls -d src-tauri/gen/apple/*.xcworkspace 2>/dev/null | head -1 || true)"
-          if [ -n "$B" ]; then
-            TARGET_ARGS="-workspace $B"
-            LIST="$(xcodebuild -list -workspace "$B" 2>/dev/null || true)"
-          else
-            P="$(ls -d src-tauri/gen/apple/*.xcodeproj | head -1)"
-            TARGET_ARGS="-project $P"
-            LIST="$(xcodebuild -list -project "$P" 2>/dev/null || true)"
+          export CODE_SIGNING_ALLOWED=NO
+          export CODE_SIGNING_REQUIRED=NO
+          export CODE_SIGN_IDENTITY=""
+          export CODE_SIGN_ENTITLEMENTS=""
+          npx tauri ios build --debug
+
+          echo "---- 找 .app ----"
+          APP="$(find src-tauri/gen/apple "$HOME/Library/Developer/Xcode/DerivedData" \
+                  -maxdepth 8 -type d -name "*.app" 2>/dev/null | head -1)"
+          echo "app=[$APP]"
+          if [ -z "${APP:-}" ]; then
+            echo "::error::tauri ios build 没产出 .app"
+            exit 1
           fi
-          SCHEME="$(printf '%s\n' "$LIST" | awk '/Schemes:/{f=1;next} f&&NF{print $1; exit}')"
-          echo "scheme=$SCHEME"
-          xcodebuild $TARGET_ARGS -scheme "$SCHEME" -configuration release -sdk iphoneos \
-            -derivedDataPath "$PWD/ios-build" \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" CODE_SIGN_ENTITLEMENTS="" \
-            build | tail -n 80
-          APP="$(ls -d ios-build/Build/Products/Release-iphoneos/*.app | head -1)"
+
           mkdir -p dist/Payload
           cp -R "$APP" dist/Payload/
           VER="$(node -p "require('./package.json').version")"
           ( cd dist && zip -qry "sparrow-note-${VER}-ios-unsigned.ipa" Payload )
           rm -rf dist/Payload
+          ls -lh dist
+
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -301,6 +305,26 @@ jobs:
           pattern: "*"
           path: assets
           merge-multiple: true
+
+      # 之前用 find 收太宽，往 Release 里塞过一堆构建中间产物（build_script_build-*.exe 等）。
+      # 这里每次发版顺手把明显不是安装包的资产删掉，免得越积越多。
+      - name: 清理 Release 里的历史垃圾资产
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -uo pipefail
+          names="$(gh release view "$TAG" --json assets --jq '.assets[].name' 2>/dev/null || true)"
+          [ -n "$names" ] || { echo "Release 还没有资产，跳过"; exit 0; }
+          echo "$names" | while IFS= read -r name; do
+            case "$name" in
+              build_script_build-*|build-script-build.exe|sparrow_note.exe|sparrow-note.exe|*.sig|*.tar.gz)
+                echo "删除垃圾资产：$name"
+                gh release delete-asset "$TAG" "$name" --yes || true
+                ;;
+            esac
+          done
 
       - name: 筛出安装包
         shell: bash
