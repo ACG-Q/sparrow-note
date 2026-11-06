@@ -185,29 +185,33 @@ jobs:
       #   Windows: <bundle>/nsis/*.exe、<bundle>/msi/*.msi
       #   macOS:   <bundle>/dmg/*.dmg（macos/*.app.tar.gz 是更新器产物，不发）
       #   Linux:   <bundle>/deb/*.deb、<bundle>/rpm/*.rpm、<bundle>/appimage/*.AppImage
+      # 按平台真实的产物子目录取文件；不再用 find/通配叠加，避免把 target 里的
+      # 构建中间产物（build-script-build.exe 之类）一起收进来。
+      #   Windows: <bundle>/nsis/*-setup.exe（有的话再加 msi）
+      #   macOS:   <bundle>/dmg/*.dmg
+      #   Linux:   <bundle>/deb/*.deb、<bundle>/rpm/*.rpm、<bundle>/appimage/*.AppImage
       - name: 收集安装包
         shell: bash
         run: |
-          # GitHub 的 bash 默认带 -e：`[ -f x ] && cp ...` 在没有该文件时会直接终止整步，
-          # 所以这里一律用 if 块，别用 && 串联。
           set -uo pipefail
           rm -rf out
           mkdir -p out
           B="${{ matrix.bundleDir }}"
-          for pat in nsis/*.exe msi/*.msi dmg/*.dmg deb/*.deb rpm/*.rpm appimage/*.AppImage; do
-            for f in "$B"/$pat; do
-              if [ -f "$f" ]; then
-                cp -v -- "$f" out/
-              fi
-            done
-          done
+          echo "bundleDir=$B"
+          ls -R "$B" 2>/dev/null | head -60 || true
+          cp -v "$B"/nsis/*-setup.exe out/ 2>/dev/null || true
+          cp -v "$B"/nsis/*.exe out/ 2>/dev/null || true
+          cp -v "$B"/msi/*.msi out/ 2>/dev/null || true
+          cp -v "$B"/dmg/*.dmg out/ 2>/dev/null || true
+          cp -v "$B"/deb/*.deb out/ 2>/dev/null || true
+          cp -v "$B"/rpm/*.rpm out/ 2>/dev/null || true
+          cp -v "$B"/appimage/*.AppImage out/ 2>/dev/null || true
           echo "---- out ----"
           ls -lh out || true
-          n=$(ls -1 out 2>/dev/null | wc -l | tr -d ' ')
+          n=$(ls -1 out 2>/dev/null | wc -l | tr -d " ")
           echo "文件数：$n"
           if [ "$n" -eq 0 ]; then
             echo "::error::在 $B 下没找到安装包"
-            ls -R "$B" 2>/dev/null || true
             exit 1
           fi
 
