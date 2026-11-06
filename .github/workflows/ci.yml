@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 # 一个文件跑完四种事，靠触发器 + if 分流：
 #
@@ -188,16 +188,19 @@ jobs:
       - name: 收集安装包
         shell: bash
         run: |
+          # GitHub 的 bash 默认带 -e：`[ -f x ] && cp ...` 在没有该文件时会直接终止整步，
+          # 所以这里一律用 if 块，别用 && 串联。
           set -uo pipefail
-          rm -rf out && mkdir -p out
+          rm -rf out
+          mkdir -p out
           B="${{ matrix.bundleDir }}"
-          shopt -s nullglob
           for pat in nsis/*.exe msi/*.msi dmg/*.dmg deb/*.deb rpm/*.rpm appimage/*.AppImage; do
             for f in "$B"/$pat; do
-              [ -f "$f" ] && cp -v -- "$f" out/
+              if [ -f "$f" ]; then
+                cp -v -- "$f" out/
+              fi
             done
           done
-          shopt -u nullglob
           echo "---- out ----"
           ls -lh out || true
           n=$(ls -1 out 2>/dev/null | wc -l | tr -d ' ')
