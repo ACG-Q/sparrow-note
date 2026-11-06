@@ -263,7 +263,7 @@ jobs:
           export CODE_SIGNING_REQUIRED=NO
           export CODE_SIGN_IDENTITY=""
           export CODE_SIGN_ENTITLEMENTS=""
-          npx tauri ios build --debug
+          npx tauri ios build --debug --no-sign
 
           echo "---- 找 .app ----"
           APP="$(find src-tauri/gen/apple "$HOME/Library/Developer/Xcode/DerivedData" \
@@ -315,13 +315,14 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
-          names="$(gh release view "$TAG" --json assets --jq '.assets[].name' 2>/dev/null || true)"
+          REPO="${{ github.repository }}"
+          names="$(gh release view "$TAG" --repo "$REPO" --json assets --jq '.assets[].name' 2>/dev/null || true)"
           [ -n "$names" ] || { echo "Release 还没有资产，跳过"; exit 0; }
           echo "$names" | while IFS= read -r name; do
             case "$name" in
               build_script_build-*|build-script-build.exe|sparrow_note.exe|sparrow-note.exe|*.sig|*.tar.gz)
                 echo "删除垃圾资产：$name"
-                gh release delete-asset "$TAG" "$name" --yes || true
+                gh release delete-asset "$TAG" "$name" --repo "$REPO" --yes || true
                 ;;
             esac
           done
